@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Classificador ZPL - Zona e Data Plano</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f4f6f8;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #172033;
+}
+
+header {
+    background: #172b4d;
+    color: white;
+    padding: 22px 30px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 25px;
+}
+
+header p {
+    margin: 6px 0 0;
+    color: #d5deeb;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 25px auto;
+    padding: 0 20px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    border: 1px solid #dce2e8;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.card h2 {
+    margin-top: 0;
+    font-size: 17px;
+}
+
+.info {
+    color: #697586;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+textarea {
+    width: 100%;
+    min-height: 350px;
+    resize: vertical;
+    border: 1px solid #cbd3dc;
+    border-radius: 8px;
+    padding: 12px;
+
+    font-family: Consolas, monospace;
+    font-size: 12px;
+
+    outline: none;
+}
+
+textarea:focus {
+    border-color: #1769d1;
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-right: 8px;
+    margin-bottom: 10px;
+
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #1769d1;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0d55ad;
+}
+
+.btn-secondary {
+    background: #e8edf3;
+    color: #243447;
+}
+
+.status {
+    padding: 12px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.status-info {
+    background: #edf5ff;
+    color: #16518f;
+}
+
+.status-ok {
+    background: #eaf8f0;
+    color: #087443;
+}
+
+.status-error {
+    background: #fff0ef;
+    color: #b42318;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.stat {
+    background: white;
+    border: 1px solid #dce2e8;
+    border-radius: 9px;
+    padding: 12px;
+}
+
+.stat strong {
+    display: block;
+    font-size: 23px;
+}
+
+.stat span {
+    color: #697586;
+    font-size: 12px;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+th,
+td {
+    border-bottom: 1px solid #e4e8ed;
+    padding: 10px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+th {
+    background: #f6f8fa;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.badge-zone {
+    background: #e8f0ff;
+    color: #1556a8;
+}
+
+.badge-at {
+    background: #fff0ef;
+    color: #b42318;
+}
+
+.badge-hj {
+    background: #eaf8f0;
+    color: #087443;
+}
+
+.badge-ft {
+    background: #fff5df;
+    color: #9a5a00;
+}
+
+.badge-none {
+    background: #edf0f3;
+    color: #687386;
+}
+
+@media (max-width: 900px) {
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+<h1>Gerador ZPL — Zona + Data Plano</h1>
+
+<p>
+Cole o ZPL original e os dados copiados do WMS.
+O sistema cruza os pedidos automaticamente.
+</p>
+
+</header>
+
+
+<div class="container">
+
+
+<!-- ENTRADAS -->
+
+<div class="grid">
+
+<div class="card">
+
+<h2>1. ZPL original</h2>
+
+<div class="info">
+Cole aqui o ZPL completo gerado pelo WMS.
+</div>
+
+<textarea
+id="zplInput"
+placeholder="Cole o ZPL aqui..."
+></textarea>
+
+</div>
+
+
+<div class="card">
+
+<h2>2. Dados do WMS</h2>
+
+<div class="info">
+Cole aqui as linhas copiadas diretamente do WMS.
+</div>
+
+<textarea
+id="wmsInput"
+placeholder="Cole aqui a tabela do WMS..."
+></textarea>
+
+</div>
+
+</div>
+
+
+<!-- BOTÕES -->
+
+<button
+class="btn-primary"
+onclick="processar()"
+>
+PROCESSAR
+</button>
+
+
+<button
+class="btn-secondary"
+onclick="carregarExemplo()"
+>
+CARREGAR EXEMPLO
+</button>
+
+
+<button
+class="btn-secondary"
+onclick="limparTudo()"
+>
+LIMPAR
+</button>
+
+
+<!-- STATUS -->
+
+<div
+id="status"
+class="status status-info"
+>
+Pronto para processar.
+</div>
+
+
+<!-- INDICADORES -->
+
+<div class="stats">
+
+<div class="stat">
+<strong id="totalTotes">0</strong>
+<span>Totes no ZPL</span>
+</div>
+
+<div class="stat">
+<strong id="encontrados">0</strong>
+<span>Encontrados no WMS</span>
+</div>
+
+<div class="stat">
+<strong id="zonas">0</strong>
+<span>Com zona</span>
+</div>
+
+<div class="stat">
+<strong id="planos">0</strong>
+<span>Com data-plano</span>
+</div>
+
+<div class="stat">
+<strong id="pendencias">0</strong>
+<span>Pendências</span>
+</div>
+
+</div>
+
+
+<!-- CONFERÊNCIA -->
+
+<div class="card">
+
+<h2>3. Conferência</h2>
+
+<div class="info">
+Confira se todos os pedidos receberam Zona e Data-plano antes de imprimir.
+</div>
+
+<div class="table-container">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>#</th>
+<th>Tote</th>
+<th>Pedido</th>
+<th>Posição</th>
+<th>Volume</th>
+<th>Zona</th>
+<th>Plano</th>
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+<tbody id="resultadoTabela">
+
+<tr>
+
+<td colspan="8">
+Nenhum processamento realizado.
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+<!-- SAÍDA -->
+
+<div class="card">
+
+<h2>4. ZPL atualizado</h2>
+
+<div class="info">
+Aqui aparecerá o ZPL com Zona e Data-plano.
+</div>
+
+<textarea
+id="zplOutput"
+readonly
+style="min-height:450px;"
+></textarea>
+
+<br><br>
+
+<button
+class="btn-primary"
+onclick="copiarZPL()"
+>
+COPIAR ZPL
+</button>
+
+
+<button
+class="btn-secondary"
+onclick="baixarZPL()"
+>
+BAIXAR .ZPL
+</button>
+
+</div>
+
+
+</div>
+
+
+<script>
+
+
+/* =========================================================
+   NORMALIZAÇÃO
+========================================================= */
+
+function normalizar(texto) {
+
+    return texto
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+
+}
+
+
+function somenteNumeros(texto) {
+
+    return texto.replace(/\D/g, "");
+
+}
+
+
+/* =========================================================
+   IDENTIFICAR ZONA
+========================================================= */
+
+function identificarZona(texto) {
+
+    let t = normalizar(texto);
+
+
+    /* Venda direta */
+
+    if (
+        t.includes("venda directa") ||
+        t.includes("venda direta")
+    ) {
+
+        return "VD";
+
+    }
+
+
+    /* E-commerce */
+
+    if (
+        t.includes("ecommerce") ||
+        t.includes("e-commerce")
+    ) {
+
+        return "EC";
+
+    }
+
+
+    /* Zonas */
+
+    let resultado = t.match(/\bz\s*(\d+)\b/);
+
+    if (resultado) {
+
+        return "Z" + resultado[1];
+
+    }
+
+
+    return "";
+
+}
+
+
+/* =========================================================
+   IDENTIFICAR DATA PLANO
+========================================================= */
+
+function identificarPlano(texto) {
+
+    let t = normalizar(texto);
+
+
+    /*
+       EXEMPLO:
+
+       Há 14 horas
+       Há 2 dias
+
+       = ATRASADO
+    */
+
+    if (
+        /ha\s+\d+\s*(hora|horas|dia|dias)/.test(t)
+    ) {
+
+        return "AT";
+
+    }
+
+
+    /*
+       HOJE
+    */
+
+    if (t.includes("hoje")) {
+
+        return "HJ";
+
+    }
+
+
+    /*
+       AMANHÃ
+    */
+
+    if (t.includes("amanha")) {
+
+        return "FT";
+
+    }
+
+
+    /*
+       DIAS DA SEMANA
+    */
+
+    const diasSemana = {
+
+        domingo: 0,
+        segunda: 1,
+        terca: 2,
+        quarta: 3,
+        quinta: 4,
+        sexta: 5,
+        sabado: 6
+
+    };
+
+
+    let hoje = new Date().getDay();
+
+
+    for (let dia in diasSemana) {
+
+        if (t.includes(dia)) {
+
+            let destino = diasSemana[dia];
+
+            let diferenca =
+                (destino - hoje + 7) % 7;
+
+
+            /*
+               Mesmo dia
+            */
+
+            if (diferenca === 0) {
+
+                return "HJ";
+
+            }
+
+
+            /*
+               Qualquer dia futuro
+            */
+
+            return "FT";
+
+        }
+
+    }
+
+
+    /*
+       Datas explícitas:
+
+       27/09/2026
+       27-09-2026
+    */
+
+    let dataBR =
+        t.match(
+            /\b(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})\b/
+        );
+
+
+    if (dataBR) {
+
+        let data = new Date(
+
+            Number(dataBR[3]),
+            Number(dataBR[2]) - 1,
+            Number(dataBR[1])
+
+        );
+
+
+        let agora = new Date();
+
+
+        let hojeData = new Date(
+
+            agora.getFullYear(),
+            agora.getMonth(),
+            agora.getDate()
+
+        );
+
+
+        if (data < hojeData) {
+
+            return "AT";
+
+        }
+
+
+        if (
+            data.getTime() ===
+            hojeData.getTime()
+        ) {
+
+            return "HJ";
+
+        }
+
+
+        return "FT";
+
+    }
+
+
+    return "";
+
+}
+
+
+/* =========================================================
+   LER DADOS DO WMS
+========================================================= */
+
+function lerWMS(texto) {
+
+    let linhas =
+        texto.split(/\r?\n/);
+
+    let registros = [];
+
+
+    linhas.forEach(function(linha) {
+
+
+        linha = linha.trim();
+
+
+        if (!linha) {
+
+            return;
+
+        }
+
+
+        /*
+           Remove os pipes das extremidades
+        */
+
+        linha =
+            linha
+            .replace(/^\|\s*/, "")
+            .replace(/\s*\|$/, "");
+
+
+        /*
+           Divide as colunas
+        */
+
+        let colunas =
+            linha
+            .split("|")
+            .map(function(c) {
+
+                return c.trim();
+
+            });
+
+
+        /*
+           Procura pedido
+        */
+
+        let colunaPedido =
+            colunas.find(function(c) {
+
+                return /#?\d{7,}/.test(c);
+
+            });
+
+
+        /*
+           Procura tote
+        */
+
+        let colunaTote =
+            colunas.find(function(c) {
+
+                return /tote\s*\d+/i.test(c);
+
+            });
+
+
+        if (
+            !colunaPedido &&
+            !colunaTote
+        ) {
+
+            return;
+
+        }
+
+
+        let pedido =
+            colunaPedido
+            ? somenteNumeros(colunaPedido)
+            : "";
+
+
+        let tote = "";
+
+
+        if (colunaTote) {
+
+            let encontrado =
+                colunaTote.match(
+                    /tote\s*\d+/i
+                );
+
+
+            if (encontrado) {
+
+                tote =
+                    encontrado[0]
+                    .replace(/\s/g, "")
+                    .toLowerCase();
+
+            }
+
+        }
+
+
+        /*
+           Junta toda a linha para
+           identificar zona e plano.
+        */
+
+        let linhaCompleta =
+            colunas.join(" | ");
+
+
+        let zona =
+            identificarZona(linhaCompleta);
+
+
+        let plano =
+            identificarPlano(linhaCompleta);
+
+
+        registros.push({
+
+            pedido: pedido,
+
+            tote: tote,
+
+            zona: zona,
+
+            plano: plano
+
+        });
+
+    });
+
+
+    return registros;
+
+}
+
+
+/* =========================================================
+   LER ZPL
+========================================================= */
+
+function lerZPL(texto) {
+
+
+    /*
+       Cada ^XA ... ^XZ é um bloco.
+    */
+
+    let blocos =
+        texto.match(
+            /\^XA[\s\S]*?\^XZ/g
+        ) || [];
+
+
+    let etiquetas = [];
+
+
+    blocos.forEach(function(bloco, indiceBloco) {
+
+
+        /*
+           Totes
+        */
+
+        let totes =
+            [
+                ...bloco.matchAll(
+                    /\^FD(tote\d+)\^FS/gi
+                )
+            ]
+            .map(function(x) {
+
+                return x[1].toLowerCase();
+
+            });
+
+
+        /*
+           Posição da caixa
+        */
+
+        let posicoes =
+            [
+                ...bloco.matchAll(
+                    /\^FO(?:260|680),25\^FD([^\^]*)\^FS/g
+                )
+            ]
+            .map(function(x) {
+
+                return x[1];
+
+            });
+
+
+        /*
+           Pedido
+        */
+
+        let pedidos =
+            [
+                ...bloco.matchAll(
+                    /\^FO(?:20|440),135\^FD(\d+)\^FS/g
+                )
+            ]
+            .map(function(x) {
+
+                return x[1];
+
+            });
+
+
+        /*
+           Multivolume
+        */
+
+        let volumes =
+            [
+                ...bloco.matchAll(
+                    /\^A0R,60,60\^FO(?:320|740),30\^FD([^\^]*)\^FS/g
+                )
+            ]
+            .map(function(x) {
+
+                return x[1];
+
+            });
+
+
+        totes.forEach(function(tote, indice) {
+
+
+            etiquetas.push({
+
+                bloco: indiceBloco,
+
+                tote: tote,
+
+                pedido:
+                    pedidos[indice] || "",
+
+                posicao:
+                    posicoes[indice] || "",
+
+                volume:
+                    volumes[indice] || ""
+
+            });
+
+        });
+
+    });
+
+
+    return {
+
+        blocos: blocos,
+
+        etiquetas: etiquetas
+
+    };
+
+}
+
+
+/* =========================================================
+   PROCESSAR
+========================================================= */
+
+function processar() {
+
+
+    let zpl =
+        document
+        .getElementById("zplInput")
+        .value
+        .trim();
+
+
+    let wms =
+        document
+        .getElementById("wmsInput")
+        .value
+        .trim();
+
+
+    if (!zpl || !wms) {
+
+        mostrarStatus(
+            "Cole o ZPL e os dados do WMS antes de processar.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    /*
+       Ler WMS
+    */
+
+    let registros =
+        lerWMS(wms);
+
+
+    /*
+       Ler ZPL
+    */
+
+    let dadosZPL =
+        lerZPL(zpl);
+
+
+    /*
+       Criar mapas para busca rápida
+    */
+
+    let mapaPedido =
+        new Map();
+
+
+    let mapaTote =
+        new Map();
+
+
+    registros.forEach(function(registro) {
+
+
+        if (registro.pedido) {
+
+            mapaPedido.set(
+                registro.pedido,
+                registro
+            );
+
+        }
+
+
+        if (registro.tote) {
+
+            mapaTote.set(
+                registro.tote,
+                registro
+            );
+
+        }
+
+    });
+
+
+    /*
+       Encontrar correspondência
+    */
+
+    let correspondencias =
+        dadosZPL.etiquetas.map(
+            function(etiqueta) {
+
+
+                /*
+                   Primeiro tenta pelo pedido
+                */
+
+                let registro =
+                    mapaPedido.get(
+                        etiqueta.pedido
+                    );
+
+
+                /*
+                   Se não encontrar,
+                   tenta pelo tote
+                */
+
+                if (!registro) {
+
+                    registro =
+                        mapaTote.get(
+                            etiqueta.tote
+                        );
+
+                }
+
+
+                return registro || null;
+
+            }
+        );
+
+
+    /*
+       Criar novo ZPL
+    */
+
+    let novoZPL =
+        dadosZPL.blocos.map(
+            function(bloco, indiceBloco) {
+
+
+                let etiquetasDoBloco =
+                    dadosZPL.etiquetas.filter(
+                        function(e) {
+
+                            return (
+                                e.bloco ===
+                                indiceBloco
+                            );
+
+                        }
+                    );
+
+
+                etiquetasDoBloco.forEach(
+                    function(etiqueta, indice) {
+
+
+                        let registro =
+                            mapaPedido.get(
+                                etiqueta.pedido
+                            );
+
+
+                        if (!registro) {
+
+                            registro =
+                                mapaTote.get(
+                                    etiqueta.tote
+                                );
+
+                        }
+
+
+                        if (!registro) {
+
+                            return;
+
+                        }
+
+
+                        /*
+                           Coordenadas do lado
+                           esquerdo ou direito.
+                        */
+
+                        let xTote =
+                            indice === 0
+                            ? 20
+                            : 440;
+
+
+                        /*
+                           ZONA
+                           fica depois do nome
+                           do tote.
+                        */
+
+                        let xZona =
+                            indice === 0
+                            ? 150
+                            : 570;
+
+
+                        /*
+                           DATA PLANO
+                        */
+
+                        let xPlano =
+                            indice === 0
+                            ? 205
+                            : 625;
+
+
+                        /*
+                           Inserir ZONA
+                        */
+
+                        if (registro.zona) {
+
+
+                            let regexTote =
+                                new RegExp(
+                                    "\\^FO" +
+                                    xTote +
+                                    ",20\\^FD" +
+                                    etiqueta.tote +
+                                    "\\^FS"
+                                );
+
+
+                            let campoZona =
+
+                                "^CF0,25" +
+                                "^FO" +
+                                xZona +
+                                ",25" +
+                                "^FD" +
+                                registro.zona +
+                                "^FS";
+
+
+                            bloco =
+                                bloco.replace(
+                                    regexTote,
+
+                                    function(original) {
+
+                                        return (
+                                            original +
+                                            "\n" +
+                                            campoZona
+                                        );
+
+                                    }
+                                );
+
+                        }
+
+
+                        /*
+                           Inserir DATA PLANO
+                        */
+
+                        if (registro.plano) {
+
+
+                            let regexTote =
+                                new RegExp(
+                                    "\\^FO" +
+                                    xTote +
+                                    ",20\\^FD" +
+                                    etiqueta.tote +
+                                    "\\^FS"
+                                );
+
+
+                            let campoPlano =
+
+                                "^CF0,20" +
+                                "^FO" +
+                                xPlano +
+                                ",27" +
+                                "^FD" +
+                                registro.plano +
+                                "^FS";
+
+
+                            bloco =
+                                bloco.replace(
+                                    regexTote,
+
+                                    function(original) {
+
+                                        return (
+                                            original +
+                                            "\n" +
+                                            campoPlano
+                                        );
+
+                                    }
+                                );
+
+                        }
+
+                    }
+                );
+
+
+                return bloco;
+
+            }
+        )
+        .join("");
+
+
+    /*
+       Mostrar resultado
+    */
+
+    document
+        .getElementById("zplOutput")
+        .value = novoZPL;
+
+
+    /*
+       Montar tabela
+    */
+
+    montarTabela(
+        dadosZPL.etiquetas,
+        correspondencias
+    );
+
+
+    mostrarStatus(
+        "Processamento concluído. Confira as pendências antes de imprimir.",
+        "ok"
+    );
+
+}
+
+
+/* =========================================================
+   TABELA
+========================================================= */
+
+function montarTabela(
+    etiquetas,
+    correspondencias
+) {
+
+
+    let tbody =
+        document
+        .getElementById("resultadoTabela");
+
+
+    tbody.innerHTML = "";
+
+
+    let encontrados = 0;
+
+    let zonas = 0;
+
+    let planos = 0;
+
+    let pendencias = 0;
+
+
+    etiquetas.forEach(
+        function(etiqueta, indice) {
+
+
+            let registro =
+                correspondencias[indice];
+
+
+            if (registro) {
+
+                encontrados++;
+
+            }
+
+
+            if (
+                registro &&
+                registro.zona
+            ) {
+
+                zonas++;
+
+            }
+
+
+            if (
+                registro &&
+                registro.plano
+            ) {
+
+                planos++;
+
+            }
+
+
+            if (
+                !registro ||
+                !registro.zona ||
+                !registro.plano
+            ) {
+
+                pendencias++;
+
+            }
+
+
+            let linha =
+                document.createElement("tr");
+
+
+            let zonaHTML =
+                registro &&
+                registro.zona
+
+                ?
+
+                '<span class="badge badge-zone">' +
+                registro.zona +
+                '</span>'
+
+                :
+
+                '<span class="badge badge-none">—</span>';
+
+
+            let planoHTML = "";
+
+
+            if (
+                registro &&
+                registro.plano
+            ) {
+
+
+                let classe =
+                    registro.plano === "AT"
+                    ? "badge-at"
+                    : registro.plano === "HJ"
+                    ? "badge-hj"
+                    : "badge-ft";
+
+
+                planoHTML =
+                    '<span class="badge ' +
+                    classe +
+                    '">' +
+                    registro.plano +
+                    '</span>';
+
+            }
+
+            else {
+
+                planoHTML =
+                    '<span class="badge badge-none">—</span>';
+
+            }
+
+
+            let status =
+
+                registro &&
+                registro.zona &&
+                registro.plano
+
+                ? "OK"
+
+                : "PENDENTE";
+
+
+            linha.innerHTML =
+
+                "<td>" +
+                (indice + 1) +
+                "</td>" +
+
+                "<td>" +
+                etiqueta.tote +
+                "</td>" +
+
+                "<td>" +
+                etiqueta.pedido +
+                "</td>" +
+
+                "<td>" +
+                etiqueta.posicao +
+                "</td>" +
+
+                "<td>" +
+                (etiqueta.volume || "—") +
+                "</td>" +
+
+                "<td>" +
+                zonaHTML +
+                "</td>" +
+
+                "<td>" +
+                planoHTML +
+                "</td>" +
+
+                "<td>" +
+                status +
+                "</td>";
+
+
+            tbody.appendChild(linha);
+
+        }
+    );
+
+
+    /*
+       Atualizar indicadores
+    */
+
+    document
+        .getElementById("totalTotes")
+        .textContent =
+        etiquetas.length;
+
+
+    document
+        .getElementById("encontrados")
+        .textContent =
+        encontrados;
+
+
+    document
+        .getElementById("zonas")
+        .textContent =
+        zonas;
+
+
+    document
+        .getElementById("planos")
+        .textContent =
+        planos;
+
+
+    document
+        .getElementById("pendencias")
+        .textContent =
+        pendencias;
+
+}
+
+
+/* =========================================================
+   COPIAR ZPL
+========================================================= */
+
+function copiarZPL() {
+
+
+    let texto =
+        document
+        .getElementById("zplOutput")
+        .value;
+
+
+    if (!texto) {
+
+        return;
+
+    }
+
+
+    navigator.clipboard.writeText(texto);
+
+
+    mostrarStatus(
+        "ZPL copiado para a área de transferência.",
+        "ok"
+    );
+
+}
+
+
+/* =========================================================
+   BAIXAR ZPL
+========================================================= */
+
+function baixarZPL() {
+
+
+    let texto =
+        document
+        .getElementById("zplOutput")
+        .value;
+
+
+    if (!texto) {
+
+        return;
+
+    }
+
+
+    let arquivo =
+        new Blob(
+            [texto],
+            {
+                type: "text/plain"
+            }
+        );
+
+
+    let link =
+        document.createElement("a");
+
+
+    link.href =
+        URL.createObjectURL(arquivo);
+
+
+    link.download =
+        "ZPL_atualizado.zpl";
+
+
+    link.click();
+
+
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+function mostrarStatus(
+    mensagem,
+    tipo
+) {
+
+
+    let elemento =
+        document.getElementById("status");
+
+
+    elemento.textContent =
+        mensagem;
+
+
+    elemento.className =
+        "status";
+
+
+    if (tipo === "ok") {
+
+        elemento.classList.add(
+            "status-ok"
+        );
+
+    }
+
+    else if (tipo === "error") {
+
+        elemento.classList.add(
+            "status-error"
+        );
+
+    }
+
+    else {
+
+        elemento.classList.add(
+            "status-info"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   LIMPAR
+========================================================= */
+
+function limparTudo() {
+
+
+    document
+        .getElementById("zplInput")
+        .value = "";
+
+
+    document
+        .getElementById("wmsInput")
+        .value = "";
+
+
+    document
+        .getElementById("zplOutput")
+        .value = "";
+
+
+    document
+        .getElementById("resultadoTabela")
+        .innerHTML =
+
+        '<tr>' +
+        '<td colspan="8">' +
+        'Nenhum processamento realizado.' +
+        '</td>' +
+        '</tr>';
+
+
+    document
+        .getElementById("totalTotes")
+        .textContent = "0";
+
+
+    document
+        .getElementById("encontrados")
+        .textContent = "0";
+
+
+    document
+        .getElementById("zonas")
+        .textContent = "0";
+
+
+    document
+        .getElementById("planos")
+        .textContent = "0";
+
+
+    document
+        .getElementById("pendencias")
+        .textContent = "0";
+
+
+}
+
+
+/* =========================================================
+   EXEMPLO
+========================================================= */
+
+function carregarExemplo() {
+
+
+    document
+        .getElementById("zplInput")
+        .value =
+
+`^XA
+^CF0,40
+
+^FO20,20^FDtote18547^FS
+
+^CF0,25^FO260,25^FD1^FS^CF0,40
+
+^FO20,70^BY2,2.5,80^BCN,40,N,N,N^FDtote18547^FS
+
+^A0R,60,60^FO320,30^FD^FS
+
+^CF0,25
+
+^FO20,135^FD0263677044^FS
+
+^FO150,135^FDkaua.flores.rpa^FS
+
+^CF0,40
+
+^FO440,20^FDtote17510^FS
+
+^CF0,25^FO680,25^FD2^FS^CF0,40
+
+^FO440,70^BY2,2.5,80^BCN,40,N,N,N^FDtote17510^FS
+
+^CF0,30
+
+^A0R,60,60^FO740,30^FD^FS
+
+^CF0,25
+
+^FO440,135^FD0263651401^FS
+
+^FO570,135^FDkaua.flores.rpa^FS
+
+^PQ1
+
+^XZ`;
+
+
+    document
+        .getElementById("wmsInput")
+        .value =
+
+`| Natura Porto Alegre | #0263677044 | Terça-feira às 23:59 | NATURA - Natura Z3 - SC2 | natura | tote18547 | Não | kaua flores | Picking | Pickear itens |
+| Natura Porto Alegre | #0263651401 | Terça-feira às 23:59 | NATURA - Natura Z3 - SC2 | natura | tote17510 | Não | kaua flores | Picking | Pickear itens |`;
+
+
+    processar();
+
+}
+
+
+</script>
+
+</body>
+</html>
