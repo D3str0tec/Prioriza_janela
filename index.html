@@ -94,11 +94,11 @@ pre { white-space: pre-wrap; word-break: break-word; }
         <thead>
           <tr>
             <th>#</th><th>Tote ZPL</th><th>Pedido ZPL</th><th>Tote WMS</th>
-            <th>Pedido WMS</th><th>Zona</th><th>Plano</th><th>Correspondência</th>
+            <th>Pedido WMS</th><th>Zona</th><th>Plano</th><th>Data</th><th>Correspondência</th>
           </tr>
         </thead>
         <tbody id="resultadoTabela">
-          <tr><td colspan="8">Nenhum processamento realizado.</td></tr>
+          <tr><td colspan="9">Nenhum processamento realizado.</td></tr>
         </tbody>
       </table>
     </div>
@@ -225,6 +225,79 @@ function identificarPlano(texto) {
   return "";
 }
 
+/* ===================== DATA PLANO (novo) ===================== */
+// Extrai a data real (DD/MM) quando dá pra determinar, sem alterar a
+// lógica de identificarPlano() acima — roda em paralelo, sobre o mesmo texto.
+
+function formatarDataBR(d) {
+  let dia = String(d.getDate()).padStart(2, "0");
+  let mes = String(d.getMonth() + 1).padStart(2, "0");
+  return dia + "/" + mes;
+}
+
+function identificarDataPlano(texto) {
+  let t = normalizar(texto);
+  let hojeData = new Date();
+  hojeData.setHours(0, 0, 0, 0);
+
+  if (t.includes("hoje")) {
+    return formatarDataBR(hojeData);
+  }
+
+  if (t.includes("amanha")) {
+    let d = new Date(hojeData);
+    d.setDate(d.getDate() + 1);
+    return formatarDataBR(d);
+  }
+
+  if (t.includes("anteontem")) {
+    let d = new Date(hojeData);
+    d.setDate(d.getDate() - 2);
+    return formatarDataBR(d);
+  }
+
+  if (t.includes("ontem")) {
+    let d = new Date(hojeData);
+    d.setDate(d.getDate() - 1);
+    return formatarDataBR(d);
+  }
+
+  const dias = { domingo: 0, segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6 };
+  let hojeDia = new Date().getDay();
+  for (let nome in dias) {
+    if (t.includes(nome)) {
+      let diferenca = ((dias[nome] - hojeDia) % 7 + 7) % 7;
+      let d = new Date(hojeData);
+      d.setDate(d.getDate() + diferenca);
+      return formatarDataBR(d);
+    }
+  }
+
+  // "Há X horas/dias" — aproxima a data de referência subtraindo o
+  // tempo decorrido de agora. É uma estimativa (a tela não informa a
+  // data-limite original), mas útil como registro de quando ficou atrasado.
+  let decorrido = t.match(/ha\s+(\d+)\s*(hora|horas|dia|dias)\b/);
+  if (decorrido) {
+    let quantidade = Number(decorrido[1]);
+    let unidade = decorrido[2];
+    let agora = new Date();
+    if (unidade.startsWith("dia")) {
+      agora.setDate(agora.getDate() - quantidade);
+    } else {
+      agora.setHours(agora.getHours() - quantidade);
+    }
+    return formatarDataBR(agora);
+  }
+
+  let dataExplicita = t.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})\b/);
+  if (dataExplicita) {
+    let d = new Date(Number(dataExplicita[3]), Number(dataExplicita[2]) - 1, Number(dataExplicita[1]));
+    return formatarDataBR(d);
+  }
+
+  return "";
+}
+
 /* ===================== REGISTRO WMS ===================== */
 
 function criarRegistroWMS(bloco) {
@@ -233,10 +306,11 @@ function criarRegistroWMS(bloco) {
   let tote = extrairTote(texto);
   let zona = identificarZona(texto);
   let plano = identificarPlano(texto);
+  let data = identificarDataPlano(texto);
 
   if (!pedido && !tote) return null;
 
-  return { pedido, tote, zona, plano, texto };
+  return { pedido, tote, zona, plano, data, texto };
 }
 
 /* ===================== LER WMS ===================== */
@@ -368,6 +442,10 @@ function gerarZPLCompleto(dadosZPL, resultados) {
         insercoes.push("^CF0,60");
         insercoes.push("^FO" + x + ",260^FDPLANO " + registro.plano + "^FS");
       }
+      if (registro.data) {
+        insercoes.push("^CF0,25");
+        insercoes.push("^FO" + x + ",325^FDdata plano: " + registro.data + "^FS");
+      }
     });
 
     if (insercoes.length) {
@@ -426,7 +504,7 @@ function onEditarCampo(indice, campo, valor) {
 
   if (!item.correspondencia) {
     item.correspondencia = {
-      registro: { pedido: item.etiqueta.pedido, tote: item.etiqueta.tote, zona: "", plano: "" },
+      registro: { pedido: item.etiqueta.pedido, tote: item.etiqueta.tote, zona: "", plano: "", data: "" },
       metodo: "MANUAL"
     };
   } else if (item.correspondencia.metodo !== "MANUAL" && !item.correspondencia.metodo.includes("AJUSTE")) {
@@ -470,6 +548,12 @@ function criarSelect(opcoes, valorAtual, indice, campo) {
   return '<select class="sel-inline" onchange="onEditarCampo(' + indice + ", '" + campo + "', this.value)\">" + options + "</select>";
 }
 
+function criarInputData(valorAtual, indice) {
+  let valor = valorAtual || "";
+  return '<input type="text" class="sel-inline" style="width:60px" placeholder="DD/MM" value="' + valor +
+    '" onchange="onEditarCampo(' + indice + ", 'data', this.value)\">";
+}
+
 function montarTabela(resultados) {
   let tbody = document.getElementById("resultadoTabela");
   tbody.innerHTML = "";
@@ -481,6 +565,7 @@ function montarTabela(resultados) {
 
     let zonaSelect = criarSelect(OPCOES_ZONA, registro ? registro.zona : "", indice, "zona");
     let planoSelect = criarSelect(OPCOES_PLANO, registro ? registro.plano : "", indice, "plano");
+    let dataInput = criarInputData(registro ? registro.data : "", indice);
 
     let status;
     if (correspondencia) {
@@ -500,6 +585,7 @@ function montarTabela(resultados) {
       "<td>" + (registro ? registro.pedido : "—") + "</td>" +
       "<td>" + zonaSelect + "</td>" +
       "<td>" + planoSelect + "</td>" +
+      "<td>" + dataInput + "</td>" +
       "<td>" + status + "</td>";
 
     tbody.appendChild(linha);
@@ -567,7 +653,7 @@ function limparTudo() {
   document.getElementById("zplInput").value = "";
   document.getElementById("wmsInput").value = "";
   document.getElementById("zplOutput").value = "";
-  document.getElementById("resultadoTabela").innerHTML = '<tr><td colspan="8">Nenhum processamento realizado.</td></tr>';
+  document.getElementById("resultadoTabela").innerHTML = '<tr><td colspan="9">Nenhum processamento realizado.</td></tr>';
 
   estadoAtual = { dadosZPL: null, resultados: [] };
 
