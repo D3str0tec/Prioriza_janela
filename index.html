@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -222,9 +223,12 @@ th {
 }
 
 </style>
+
 </head>
 
+
 <body>
+
 
 <header>
 
@@ -241,9 +245,12 @@ O sistema cruza os pedidos automaticamente.
 <div class="container">
 
 
-<!-- ENTRADAS -->
+<!-- =========================================================
+     ENTRADAS
+========================================================= -->
 
 <div class="grid">
+
 
 <div class="card">
 
@@ -266,20 +273,24 @@ placeholder="Cole o ZPL aqui..."
 <h2>2. Dados do WMS</h2>
 
 <div class="info">
-Cole aqui as linhas copiadas diretamente do WMS.
+Cole aqui os dados diretamente do WMS.
+Pode ser tabela ou blocos verticais.
 </div>
 
 <textarea
 id="wmsInput"
-placeholder="Cole aqui a tabela do WMS..."
+placeholder="Cole aqui os dados do WMS..."
 ></textarea>
 
 </div>
 
+
 </div>
 
 
-<!-- BOTÕES -->
+<!-- =========================================================
+     BOTÕES
+========================================================= -->
 
 <button
 class="btn-primary"
@@ -305,7 +316,9 @@ LIMPAR
 </button>
 
 
-<!-- STATUS -->
+<!-- =========================================================
+     STATUS
+========================================================= -->
 
 <div
 id="status"
@@ -315,39 +328,64 @@ Pronto para processar.
 </div>
 
 
-<!-- INDICADORES -->
+<!-- =========================================================
+     INDICADORES
+========================================================= -->
 
 <div class="stats">
 
+
 <div class="stat">
+
 <strong id="totalTotes">0</strong>
+
 <span>Totes no ZPL</span>
+
 </div>
 
+
 <div class="stat">
+
 <strong id="encontrados">0</strong>
+
 <span>Encontrados no WMS</span>
+
 </div>
 
+
 <div class="stat">
+
 <strong id="zonas">0</strong>
+
 <span>Com zona</span>
+
 </div>
 
+
 <div class="stat">
+
 <strong id="planos">0</strong>
+
 <span>Com data-plano</span>
+
 </div>
+
 
 <div class="stat">
+
 <strong id="pendencias">0</strong>
+
 <span>Pendências</span>
-</div>
 
 </div>
 
 
-<!-- CONFERÊNCIA -->
+</div>
+
+
+<!-- =========================================================
+     CONFERÊNCIA
+========================================================= -->
 
 <div class="card">
 
@@ -378,6 +416,7 @@ Confira se todos os pedidos receberam Zona e Data-plano antes de imprimir.
 
 </thead>
 
+
 <tbody id="resultadoTabela">
 
 <tr>
@@ -397,7 +436,9 @@ Nenhum processamento realizado.
 </div>
 
 
-<!-- SAÍDA -->
+<!-- =========================================================
+     SAÍDA
+========================================================= -->
 
 <div class="card">
 
@@ -415,6 +456,7 @@ style="min-height:450px;"
 
 <br><br>
 
+
 <button
 class="btn-primary"
 onclick="copiarZPL()"
@@ -429,6 +471,7 @@ onclick="baixarZPL()"
 >
 BAIXAR .ZPL
 </button>
+
 
 </div>
 
@@ -445,17 +488,19 @@ BAIXAR .ZPL
 
 function normalizar(texto) {
 
-    return texto
+    return String(texto || "")
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase();
+        .toLowerCase()
+        .trim();
 
 }
 
 
 function somenteNumeros(texto) {
 
-    return texto.replace(/\D/g, "");
+    return String(texto || "")
+        .replace(/\D/g, "");
 
 }
 
@@ -469,7 +514,9 @@ function identificarZona(texto) {
     let t = normalizar(texto);
 
 
-    /* Venda direta */
+    /*
+        VENDA DIRETA
+    */
 
     if (
         t.includes("venda directa") ||
@@ -481,11 +528,14 @@ function identificarZona(texto) {
     }
 
 
-    /* E-commerce */
+    /*
+        E-COMMERCE
+    */
 
     if (
         t.includes("ecommerce") ||
-        t.includes("e-commerce")
+        t.includes("e-commerce") ||
+        t.includes("e commerce")
     ) {
 
         return "EC";
@@ -493,9 +543,19 @@ function identificarZona(texto) {
     }
 
 
-    /* Zonas */
+    /*
+        ZONAS NATURA
 
-    let resultado = t.match(/\bz\s*(\d+)\b/);
+        Exemplos:
+
+        Natura Z1
+        Natura Z3
+        Natura Z5
+        Natura Z7 - LT
+    */
+
+    let resultado =
+        t.match(/\bz\s*(\d+)\b/);
 
     if (resultado) {
 
@@ -519,16 +579,15 @@ function identificarPlano(texto) {
 
 
     /*
-       EXEMPLO:
+        ATRASADO
 
-       Há 14 horas
-       Há 2 dias
-
-       = ATRASADO
+        Há 14 horas
+        Há 2 dias
+        Ha 1 hora
     */
 
     if (
-        /ha\s+\d+\s*(hora|horas|dia|dias)/.test(t)
+        /ha\s+\d+\s*(hora|horas|dia|dias)\b/.test(t)
     ) {
 
         return "AT";
@@ -537,7 +596,21 @@ function identificarPlano(texto) {
 
 
     /*
-       HOJE
+        ONTEM / ANTEONTEM
+    */
+
+    if (
+        t.includes("ontem") ||
+        t.includes("anteontem")
+    ) {
+
+        return "AT";
+
+    }
+
+
+    /*
+        HOJE
     */
 
     if (t.includes("hoje")) {
@@ -548,7 +621,7 @@ function identificarPlano(texto) {
 
 
     /*
-       AMANHÃ
+        AMANHÃ
     */
 
     if (t.includes("amanha")) {
@@ -559,7 +632,7 @@ function identificarPlano(texto) {
 
 
     /*
-       DIAS DA SEMANA
+        DIAS DA SEMANA
     */
 
     const diasSemana = {
@@ -575,21 +648,23 @@ function identificarPlano(texto) {
     };
 
 
-    let hoje = new Date().getDay();
+    let hoje =
+        new Date().getDay();
 
 
     for (let dia in diasSemana) {
 
         if (t.includes(dia)) {
 
-            let destino = diasSemana[dia];
+            let destino =
+                diasSemana[dia];
 
             let diferenca =
-                (destino - hoje + 7) % 7;
+                destino - hoje;
 
 
             /*
-               Mesmo dia
+                Mesmo dia
             */
 
             if (diferenca === 0) {
@@ -600,10 +675,21 @@ function identificarPlano(texto) {
 
 
             /*
-               Qualquer dia futuro
+                Dia futuro
             */
 
-            return "FT";
+            if (diferenca > 0) {
+
+                return "FT";
+
+            }
+
+
+            /*
+                Dia anterior
+            */
+
+            return "AT";
 
         }
 
@@ -611,10 +697,10 @@ function identificarPlano(texto) {
 
 
     /*
-       Datas explícitas:
+        DATAS EXPLÍCITAS
 
-       27/09/2026
-       27-09-2026
+        27/09/2026
+        27-09-2026
     */
 
     let dataBR =
@@ -625,25 +711,24 @@ function identificarPlano(texto) {
 
     if (dataBR) {
 
-        let data = new Date(
-
-            Number(dataBR[3]),
-            Number(dataBR[2]) - 1,
-            Number(dataBR[1])
-
-        );
-
-
-        let agora = new Date();
+        let data =
+            new Date(
+                Number(dataBR[3]),
+                Number(dataBR[2]) - 1,
+                Number(dataBR[1])
+            );
 
 
-        let hojeData = new Date(
+        let agora =
+            new Date();
 
-            agora.getFullYear(),
-            agora.getMonth(),
-            agora.getDate()
 
-        );
+        let hojeData =
+            new Date(
+                agora.getFullYear(),
+                agora.getMonth(),
+                agora.getDate()
+            );
 
 
         if (data < hojeData) {
@@ -674,145 +759,326 @@ function identificarPlano(texto) {
 
 
 /* =========================================================
-   LER DADOS DO WMS
+   EXTRAIR TOTE
+========================================================= */
+
+function extrairTote(texto) {
+
+    let resultado =
+        String(texto || "").match(
+            /\btote\s*\d+\b/i
+        );
+
+
+    if (!resultado) {
+
+        return "";
+
+    }
+
+
+    return resultado[0]
+        .replace(/\s/g, "")
+        .toLowerCase();
+
+}
+
+
+/* =========================================================
+   EXTRAIR PEDIDO
+========================================================= */
+
+function extrairPedido(texto) {
+
+    let resultado =
+        String(texto || "").match(
+            /#?\d{7,}/
+        );
+
+
+    if (!resultado) {
+
+        return "";
+
+    }
+
+
+    return somenteNumeros(
+        resultado[0]
+    );
+
+}
+
+
+/* =========================================================
+   CRIAR REGISTRO WMS
+========================================================= */
+
+function criarRegistroWMS(bloco) {
+
+    let texto =
+        Array.isArray(bloco)
+        ? bloco.join(" | ")
+        : String(bloco || "");
+
+
+    let pedido =
+        extrairPedido(texto);
+
+
+    let tote =
+        extrairTote(texto);
+
+
+    let zona =
+        identificarZona(texto);
+
+
+    let plano =
+        identificarPlano(texto);
+
+
+    if (!pedido && !tote) {
+
+        return null;
+
+    }
+
+
+    return {
+
+        pedido: pedido,
+        tote: tote,
+        zona: zona,
+        plano: plano
+
+    };
+
+}
+
+
+/* =========================================================
+   LER WMS
 ========================================================= */
 
 function lerWMS(texto) {
 
+    let bruto =
+        String(texto || "")
+        .replace(/\r/g, "")
+        .trim();
+
+
+    if (!bruto) {
+
+        return [];
+
+    }
+
+
     let linhas =
-        texto.split(/\r?\n/);
+        bruto
+        .split("\n")
+        .map(function(linha) {
+
+            return linha.trim();
+
+        })
+        .filter(function(linha) {
+
+            return linha !== "";
+
+        });
+
 
     let registros = [];
+
+
+    /*
+        =====================================================
+        FORMATO 1
+        TABELA COM PIPE
+        =====================================================
+
+        | Natura Porto Alegre | #0264041080 |
+        | Há 14 horas | NATURA - Natura Z7 |
+        | natura | tote14838 | Não |
+    */
+
+
+    let possuiPipe =
+        linhas.some(function(linha) {
+
+            return linha.includes("|");
+
+        });
+
+
+    if (possuiPipe) {
+
+        linhas.forEach(function(linha) {
+
+            let limpa =
+                linha
+                .replace(/^\|\s*/, "")
+                .replace(/\s*\|$/, "");
+
+
+            let colunas =
+                limpa
+                .split("|")
+                .map(function(c) {
+
+                    return c.trim();
+
+                })
+                .filter(function(c) {
+
+                    return c !== "";
+
+                });
+
+
+            if (!colunas.length) {
+
+                return;
+
+            }
+
+
+            /*
+                Ignora cabeçalhos
+                e separadores de tabela
+            */
+
+            if (
+                colunas.every(function(c) {
+
+                    return /^[-: ]+$/.test(c);
+
+                })
+            ) {
+
+                return;
+
+            }
+
+
+            let registro =
+                criarRegistroWMS(colunas);
+
+
+            if (registro) {
+
+                registros.push(registro);
+
+            }
+
+        });
+
+
+        return registros;
+
+    }
+
+
+    /*
+        =====================================================
+        FORMATO 2
+        BLOCO VERTICAL DO WMS
+        =====================================================
+
+        #0264034415
+        Amanhã às 23:59
+        NATURA - Natura Z5
+        natura
+        tote13801
+        Não
+        Duarte Guilherme
+        Picking
+    */
+
+
+    let blocos = [];
+
+    let blocoAtual = [];
 
 
     linhas.forEach(function(linha) {
 
 
-        linha = linha.trim();
-
-
-        if (!linha) {
-
-            return;
-
-        }
-
-
         /*
-           Remove os pipes das extremidades
+            Um novo pedido começa
+            quando encontramos #pedido
         */
-
-        linha =
-            linha
-            .replace(/^\|\s*/, "")
-            .replace(/\s*\|$/, "");
-
-
-        /*
-           Divide as colunas
-        */
-
-        let colunas =
-            linha
-            .split("|")
-            .map(function(c) {
-
-                return c.trim();
-
-            });
-
-
-        /*
-           Procura pedido
-        */
-
-        let colunaPedido =
-            colunas.find(function(c) {
-
-                return /#?\d{7,}/.test(c);
-
-            });
-
-
-        /*
-           Procura tote
-        */
-
-        let colunaTote =
-            colunas.find(function(c) {
-
-                return /tote\s*\d+/i.test(c);
-
-            });
-
 
         if (
-            !colunaPedido &&
-            !colunaTote
+            /^#?\d{7,}$/.test(linha)
         ) {
 
-            return;
 
-        }
+            if (blocoAtual.length) {
 
-
-        let pedido =
-            colunaPedido
-            ? somenteNumeros(colunaPedido)
-            : "";
-
-
-        let tote = "";
-
-
-        if (colunaTote) {
-
-            let encontrado =
-                colunaTote.match(
-                    /tote\s*\d+/i
+                blocos.push(
+                    blocoAtual
                 );
-
-
-            if (encontrado) {
-
-                tote =
-                    encontrado[0]
-                    .replace(/\s/g, "")
-                    .toLowerCase();
 
             }
 
+
+            blocoAtual = [
+                linha
+            ];
+
+
+            return;
+
         }
 
 
         /*
-           Junta toda a linha para
-           identificar zona e plano.
+            Se ainda não encontramos
+            um pedido, ignoramos
+            informações anteriores.
         */
 
-        let linhaCompleta =
-            colunas.join(" | ");
+        if (blocoAtual.length) {
+
+            blocoAtual.push(
+                linha
+            );
+
+        }
+
+    });
 
 
-        let zona =
-            identificarZona(linhaCompleta);
+    if (blocoAtual.length) {
+
+        blocos.push(
+            blocoAtual
+        );
+
+    }
 
 
-        let plano =
-            identificarPlano(linhaCompleta);
+    /*
+        Criar registros
+    */
+
+    blocos.forEach(function(bloco) {
+
+        let registro =
+            criarRegistroWMS(bloco);
 
 
-        registros.push({
+        if (registro) {
 
-            pedido: pedido,
+            registros.push(
+                registro
+            );
 
-            tote: tote,
-
-            zona: zona,
-
-            plano: plano
-
-        });
+        }
 
     });
 
@@ -828,13 +1094,8 @@ function lerWMS(texto) {
 
 function lerZPL(texto) {
 
-
-    /*
-       Cada ^XA ... ^XZ é um bloco.
-    */
-
     let blocos =
-        texto.match(
+        String(texto || "").match(
             /\^XA[\s\S]*?\^XZ/g
         ) || [];
 
@@ -846,94 +1107,137 @@ function lerZPL(texto) {
 
 
         /*
-           Totes
+            =================================================
+            LADO ESQUERDO
+            =================================================
         */
 
-        let totes =
-            [
-                ...bloco.matchAll(
-                    /\^FD(tote\d+)\^FS/gi
-                )
-            ]
-            .map(function(x) {
-
-                return x[1].toLowerCase();
-
-            });
+        let toteEsquerdo =
+            bloco.match(
+                /\^FO20,20\^FD(tote\d+)\^FS/i
+            );
 
 
-        /*
-           Posição da caixa
-        */
+        if (toteEsquerdo) {
 
-        let posicoes =
-            [
-                ...bloco.matchAll(
-                    /\^FO(?:260|680),25\^FD([^\^]*)\^FS/g
-                )
-            ]
-            .map(function(x) {
-
-                return x[1];
-
-            });
+            let tote =
+                toteEsquerdo[1]
+                .toLowerCase();
 
 
-        /*
-           Pedido
-        */
-
-        let pedidos =
-            [
-                ...bloco.matchAll(
-                    /\^FO(?:20|440),135\^FD(\d+)\^FS/g
-                )
-            ]
-            .map(function(x) {
-
-                return x[1];
-
-            });
+            let pedidoMatch =
+                bloco.match(
+                    /\^FO20,135\^FD(\d+)\^FS/i
+                );
 
 
-        /*
-           Multivolume
-        */
-
-        let volumes =
-            [
-                ...bloco.matchAll(
-                    /\^A0R,60,60\^FO(?:320|740),30\^FD([^\^]*)\^FS/g
-                )
-            ]
-            .map(function(x) {
-
-                return x[1];
-
-            });
+            let posicaoMatch =
+                bloco.match(
+                    /\^FO260,25\^FD([^\^]*)\^FS/i
+                );
 
 
-        totes.forEach(function(tote, indice) {
+            let volumeMatch =
+                bloco.match(
+                    /\^A0R,60,60\^FO320,30\^FD([^\^]*)\^FS/i
+                );
 
 
             etiquetas.push({
 
                 bloco: indiceBloco,
 
+                lado: "esquerdo",
+
+                x: 20,
+
                 tote: tote,
 
                 pedido:
-                    pedidos[indice] || "",
+                    pedidoMatch
+                    ? pedidoMatch[1]
+                    : "",
 
                 posicao:
-                    posicoes[indice] || "",
+                    posicaoMatch
+                    ? posicaoMatch[1]
+                    : "",
 
                 volume:
-                    volumes[indice] || ""
+                    volumeMatch
+                    ? volumeMatch[1]
+                    : ""
 
             });
 
-        });
+        }
+
+
+        /*
+            =================================================
+            LADO DIREITO
+            =================================================
+        */
+
+        let toteDireito =
+            bloco.match(
+                /\^FO440,20\^FD(tote\d+)\^FS/i
+            );
+
+
+        if (toteDireito) {
+
+            let tote =
+                toteDireito[1]
+                .toLowerCase();
+
+
+            let pedidoMatch =
+                bloco.match(
+                    /\^FO440,135\^FD(\d+)\^FS/i
+                );
+
+
+            let posicaoMatch =
+                bloco.match(
+                    /\^FO680,25\^FD([^\^]*)\^FS/i
+                );
+
+
+            let volumeMatch =
+                bloco.match(
+                    /\^A0R,60,60\^FO740,30\^FD([^\^]*)\^FS/i
+                );
+
+
+            etiquetas.push({
+
+                bloco: indiceBloco,
+
+                lado: "direito",
+
+                x: 440,
+
+                tote: tote,
+
+                pedido:
+                    pedidoMatch
+                    ? pedidoMatch[1]
+                    : "",
+
+                posicao:
+                    posicaoMatch
+                    ? posicaoMatch[1]
+                    : "",
+
+                volume:
+                    volumeMatch
+                    ? volumeMatch[1]
+                    : ""
+
+            });
+
+        }
 
     });
 
@@ -950,11 +1254,89 @@ function lerZPL(texto) {
 
 
 /* =========================================================
+   ENCONTRAR CORRESPONDÊNCIA
+========================================================= */
+
+function encontrarRegistro(etiqueta, mapaPedido, mapaTote) {
+
+    /*
+        1º - Pedido
+    */
+
+    if (etiqueta.pedido) {
+
+        let registro =
+            mapaPedido.get(
+                etiqueta.pedido
+            );
+
+
+        if (registro) {
+
+            /*
+                Se temos o tote nos dois lados,
+                validamos também.
+            */
+
+            if (
+                etiqueta.tote &&
+                registro.tote &&
+                registro.tote !== etiqueta.tote
+            ) {
+
+                let registroPorTote =
+                    mapaTote.get(
+                        etiqueta.tote
+                    );
+
+
+                if (registroPorTote) {
+
+                    return registroPorTote;
+
+                }
+
+            }
+
+
+            return registro;
+
+        }
+
+    }
+
+
+    /*
+        2º - Tote
+    */
+
+    if (etiqueta.tote) {
+
+        let registro =
+            mapaTote.get(
+                etiqueta.tote
+            );
+
+
+        if (registro) {
+
+            return registro;
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================================
    PROCESSAR
 ========================================================= */
 
 function processar() {
-
 
     let zpl =
         document
@@ -983,7 +1365,7 @@ function processar() {
 
 
     /*
-       Ler WMS
+        LER WMS
     */
 
     let registros =
@@ -991,15 +1373,39 @@ function processar() {
 
 
     /*
-       Ler ZPL
+        LER ZPL
     */
 
     let dadosZPL =
         lerZPL(zpl);
 
 
+    if (!dadosZPL.etiquetas.length) {
+
+        mostrarStatus(
+            "Nenhuma etiqueta válida foi encontrada no ZPL.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (!registros.length) {
+
+        mostrarStatus(
+            "Nenhum registro válido foi encontrado nos dados do WMS.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
     /*
-       Criar mapas para busca rápida
+        MAPAS
     */
 
     let mapaPedido =
@@ -1036,240 +1442,202 @@ function processar() {
 
 
     /*
-       Encontrar correspondência
+        CORRESPONDÊNCIAS
     */
 
     let correspondencias =
         dadosZPL.etiquetas.map(
             function(etiqueta) {
 
-
-                /*
-                   Primeiro tenta pelo pedido
-                */
-
-                let registro =
-                    mapaPedido.get(
-                        etiqueta.pedido
-                    );
-
-
-                /*
-                   Se não encontrar,
-                   tenta pelo tote
-                */
-
-                if (!registro) {
-
-                    registro =
-                        mapaTote.get(
-                            etiqueta.tote
-                        );
-
-                }
-
-
-                return registro || null;
+                return encontrarRegistro(
+                    etiqueta,
+                    mapaPedido,
+                    mapaTote
+                );
 
             }
         );
 
 
     /*
-       Criar novo ZPL
+        =====================================================
+        GERAR NOVO ZPL
+        =====================================================
     */
 
     let novoZPL =
-        dadosZPL.blocos.map(
-            function(bloco, indiceBloco) {
+        dadosZPL.blocos
+        .map(function(bloco, indiceBloco) {
 
 
-                let etiquetasDoBloco =
-                    dadosZPL.etiquetas.filter(
-                        function(e) {
+            let etiquetasDoBloco =
+                dadosZPL.etiquetas.filter(
+                    function(etiqueta) {
 
-                            return (
-                                e.bloco ===
-                                indiceBloco
-                            );
-
-                        }
-                    );
-
-
-                etiquetasDoBloco.forEach(
-                    function(etiqueta, indice) {
-
-
-                        let registro =
-                            mapaPedido.get(
-                                etiqueta.pedido
-                            );
-
-
-                        if (!registro) {
-
-                            registro =
-                                mapaTote.get(
-                                    etiqueta.tote
-                                );
-
-                        }
-
-
-                        if (!registro) {
-
-                            return;
-
-                        }
-
-
-                        /*
-                           Coordenadas do lado
-                           esquerdo ou direito.
-                        */
-
-                        let xTote =
-                            indice === 0
-                            ? 20
-                            : 440;
-
-
-                        /*
-                           ZONA
-                           fica depois do nome
-                           do tote.
-                        */
-
-                        let xZona =
-                            indice === 0
-                            ? 150
-                            : 570;
-
-
-                        /*
-                           DATA PLANO
-                        */
-
-                        let xPlano =
-                            indice === 0
-                            ? 205
-                            : 625;
-
-
-                        /*
-                           Inserir ZONA
-                        */
-
-                        if (registro.zona) {
-
-
-                            let regexTote =
-                                new RegExp(
-                                    "\\^FO" +
-                                    xTote +
-                                    ",20\\^FD" +
-                                    etiqueta.tote +
-                                    "\\^FS"
-                                );
-
-
-                            let campoZona =
-
-                                "^CF0,25" +
-                                "^FO" +
-                                xZona +
-                                ",25" +
-                                "^FD" +
-                                registro.zona +
-                                "^FS";
-
-
-                            bloco =
-                                bloco.replace(
-                                    regexTote,
-
-                                    function(original) {
-
-                                        return (
-                                            original +
-                                            "\n" +
-                                            campoZona
-                                        );
-
-                                    }
-                                );
-
-                        }
-
-
-                        /*
-                           Inserir DATA PLANO
-                        */
-
-                        if (registro.plano) {
-
-
-                            let regexTote =
-                                new RegExp(
-                                    "\\^FO" +
-                                    xTote +
-                                    ",20\\^FD" +
-                                    etiqueta.tote +
-                                    "\\^FS"
-                                );
-
-
-                            let campoPlano =
-
-                                "^CF0,20" +
-                                "^FO" +
-                                xPlano +
-                                ",27" +
-                                "^FD" +
-                                registro.plano +
-                                "^FS";
-
-
-                            bloco =
-                                bloco.replace(
-                                    regexTote,
-
-                                    function(original) {
-
-                                        return (
-                                            original +
-                                            "\n" +
-                                            campoPlano
-                                        );
-
-                                    }
-                                );
-
-                        }
+                        return (
+                            etiqueta.bloco ===
+                            indiceBloco
+                        );
 
                     }
                 );
 
 
-                return bloco;
+            let insercoes = [];
+
+
+            etiquetasDoBloco.forEach(
+                function(etiqueta) {
+
+
+                    let registro =
+                        encontrarRegistro(
+                            etiqueta,
+                            mapaPedido,
+                            mapaTote
+                        );
+
+
+                    if (!registro) {
+
+                        return;
+
+                    }
+
+
+                    /*
+                        =================================================
+                        LADO ESQUERDO
+                        =================================================
+                    */
+
+                    if (
+                        etiqueta.lado ===
+                        "esquerdo"
+                    ) {
+
+                        if (registro.zona) {
+
+                            insercoes.push(
+                                "^CF0,60\n" +
+                                "^FO20,190^FDZONA " +
+                                registro.zona +
+                                "^FS"
+                            );
+
+                        }
+
+
+                        if (registro.plano) {
+
+                            insercoes.push(
+                                "^CF0,60\n" +
+                                "^FO20,260^FDPLANO " +
+                                registro.plano +
+                                "^FS"
+                            );
+
+                        }
+
+                    }
+
+
+                    /*
+                        =================================================
+                        LADO DIREITO
+                        =================================================
+                    */
+
+                    if (
+                        etiqueta.lado ===
+                        "direito"
+                    ) {
+
+                        if (registro.zona) {
+
+                            insercoes.push(
+                                "^CF0,60\n" +
+                                "^FO440,190^FDZONA " +
+                                registro.zona +
+                                "^FS"
+                            );
+
+                        }
+
+
+                        if (registro.plano) {
+
+                            insercoes.push(
+                                "^CF0,60\n" +
+                                "^FO440,260^FDPLANO " +
+                                registro.plano +
+                                "^FS"
+                            );
+
+                        }
+
+                    }
+
+                }
+            );
+
+
+            /*
+                Inserir tudo antes do ^PQ
+                para não alterar os comandos
+                originais da etiqueta.
+            */
+
+            if (insercoes.length) {
+
+                let textoInsercoes =
+                    "\n" +
+                    insercoes.join("\n") +
+                    "\n";
+
+
+                if (/\^PQ\d+/i.test(bloco)) {
+
+                    bloco =
+                        bloco.replace(
+                            /\^PQ\d+/i,
+                            textoInsercoes +
+                            "$&"
+                        );
+
+                }
+                else {
+
+                    bloco =
+                        bloco.replace(
+                            /\^XZ/i,
+                            textoInsercoes +
+                            "^XZ"
+                        );
+
+                }
 
             }
-        )
-        .join("");
+
+
+            return bloco;
+
+        })
+        .join("\n");
 
 
     /*
-       Mostrar resultado
+        MOSTRAR ZPL
     */
 
     document
         .getElementById("zplOutput")
-        .value = novoZPL;
+        .value =
+        novoZPL;
 
 
     /*
-       Montar tabela
+        MONTAR TABELA
     */
 
     montarTabela(
@@ -1278,10 +1646,46 @@ function processar() {
     );
 
 
-    mostrarStatus(
-        "Processamento concluído. Confira as pendências antes de imprimir.",
-        "ok"
-    );
+    /*
+        STATUS
+    */
+
+    let total =
+        dadosZPL.etiquetas.length;
+
+
+    let encontrados =
+        correspondencias.filter(
+            function(r) {
+
+                return r !== null;
+
+            }
+        ).length;
+
+
+    let pendencias =
+        total - encontrados;
+
+
+    if (pendencias === 0) {
+
+        mostrarStatus(
+            "Processamento concluído. Todos os pedidos foram encontrados.",
+            "ok"
+        );
+
+    }
+    else {
+
+        mostrarStatus(
+            "Processamento concluído, mas existem " +
+            pendencias +
+            " etiqueta(s) sem correspondência no WMS.",
+            "info"
+        );
+
+    }
 
 }
 
@@ -1363,6 +1767,10 @@ function montarTabela(
                 document.createElement("tr");
 
 
+            /*
+                ZONA
+            */
+
             let zonaHTML =
                 registro &&
                 registro.zona
@@ -1378,6 +1786,10 @@ function montarTabela(
                 '<span class="badge badge-none">—</span>';
 
 
+            /*
+                PLANO
+            */
+
             let planoHTML = "";
 
 
@@ -1386,12 +1798,15 @@ function montarTabela(
                 registro.plano
             ) {
 
-
                 let classe =
                     registro.plano === "AT"
+
                     ? "badge-at"
+
                     : registro.plano === "HJ"
+
                     ? "badge-hj"
+
                     : "badge-ft";
 
 
@@ -1403,7 +1818,6 @@ function montarTabela(
                     '</span>';
 
             }
-
             else {
 
                 planoHTML =
@@ -1411,6 +1825,10 @@ function montarTabela(
 
             }
 
+
+            /*
+                STATUS
+            */
 
             let status =
 
@@ -1442,7 +1860,10 @@ function montarTabela(
                 "</td>" +
 
                 "<td>" +
-                (etiqueta.volume || "—") +
+                (
+                    etiqueta.volume ||
+                    "—"
+                ) +
                 "</td>" +
 
                 "<td>" +
@@ -1458,14 +1879,16 @@ function montarTabela(
                 "</td>";
 
 
-            tbody.appendChild(linha);
+            tbody.appendChild(
+                linha
+            );
 
         }
     );
 
 
     /*
-       Atualizar indicadores
+        INDICADORES
     */
 
     document
@@ -1506,7 +1929,6 @@ function montarTabela(
 
 function copiarZPL() {
 
-
     let texto =
         document
         .getElementById("zplOutput")
@@ -1520,12 +1942,83 @@ function copiarZPL() {
     }
 
 
-    navigator.clipboard.writeText(texto);
+    if (
+        navigator.clipboard &&
+        navigator.clipboard.writeText
+    ) {
+
+        navigator.clipboard
+            .writeText(texto)
+            .then(function() {
+
+                mostrarStatus(
+                    "ZPL copiado para a área de transferência.",
+                    "ok"
+                );
+
+            })
+            .catch(function() {
+
+                copiarFallback(texto);
+
+            });
+
+    }
+    else {
+
+        copiarFallback(texto);
+
+    }
+
+}
 
 
-    mostrarStatus(
-        "ZPL copiado para a área de transferência.",
-        "ok"
+/* =========================================================
+   FALLBACK COPIAR
+========================================================= */
+
+function copiarFallback(texto) {
+
+    let area =
+        document.createElement("textarea");
+
+
+    area.value =
+        texto;
+
+
+    document.body.appendChild(
+        area
+    );
+
+
+    area.select();
+
+
+    try {
+
+        document.execCommand(
+            "copy"
+        );
+
+        mostrarStatus(
+            "ZPL copiado para a área de transferência.",
+            "ok"
+        );
+
+    }
+    catch (erro) {
+
+        mostrarStatus(
+            "Não foi possível copiar automaticamente.",
+            "error"
+        );
+
+    }
+
+
+    document.body.removeChild(
+        area
     );
 
 }
@@ -1537,7 +2030,6 @@ function copiarZPL() {
 
 function baixarZPL() {
 
-
     let texto =
         document
         .getElementById("zplOutput")
@@ -1545,6 +2037,11 @@ function baixarZPL() {
 
 
     if (!texto) {
+
+        mostrarStatus(
+            "Não existe ZPL para baixar.",
+            "error"
+        );
 
         return;
 
@@ -1565,15 +2062,31 @@ function baixarZPL() {
 
 
     link.href =
-        URL.createObjectURL(arquivo);
+        URL.createObjectURL(
+            arquivo
+        );
 
 
     link.download =
         "ZPL_atualizado.zpl";
 
 
+    document.body.appendChild(
+        link
+    );
+
+
     link.click();
 
+
+    document.body.removeChild(
+        link
+    );
+
+
+    URL.revokeObjectURL(
+        link.href
+    );
 
 }
 
@@ -1589,7 +2102,9 @@ function mostrarStatus(
 
 
     let elemento =
-        document.getElementById("status");
+        document.getElementById(
+            "status"
+        );
 
 
     elemento.textContent =
@@ -1662,28 +2177,38 @@ function limparTudo() {
 
     document
         .getElementById("totalTotes")
-        .textContent = "0";
+        .textContent =
+        "0";
 
 
     document
         .getElementById("encontrados")
-        .textContent = "0";
+        .textContent =
+        "0";
 
 
     document
         .getElementById("zonas")
-        .textContent = "0";
+        .textContent =
+        "0";
 
 
     document
         .getElementById("planos")
-        .textContent = "0";
+        .textContent =
+        "0";
 
 
     document
         .getElementById("pendencias")
-        .textContent = "0";
+        .textContent =
+        "0";
 
+
+    mostrarStatus(
+        "Pronto para processar.",
+        "info"
+    );
 
 }
 
@@ -1700,6 +2225,7 @@ function carregarExemplo() {
         .value =
 
 `^XA
+
 ^CF0,40
 
 ^FO20,20^FDtote18547^FS
@@ -1715,6 +2241,7 @@ function carregarExemplo() {
 ^FO20,135^FD0263677044^FS
 
 ^FO150,135^FDkaua.flores.rpa^FS
+
 
 ^CF0,40
 
@@ -1752,7 +2279,13 @@ function carregarExemplo() {
 }
 
 
+/* =========================================================
+   FIM
+========================================================= */
+
 </script>
 
+
 </body>
+
 </html>
