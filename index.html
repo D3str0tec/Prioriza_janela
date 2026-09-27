@@ -1,2455 +1,614 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Gerador ZPL — Zona + Plano</title>
-
 <style>
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    background: #f4f6f8;
-    font-family: Arial, Helvetica, sans-serif;
-    color: #172033;
-}
-
-header {
-    background: #172b4d;
-    color: white;
-    padding: 22px 30px;
-}
-
-header h1 {
-    margin: 0;
-    font-size: 25px;
-}
-
-header p {
-    margin: 7px 0 0;
-    color: #d5deeb;
-}
-
-.container {
-    max-width: 1450px;
-    margin: 25px auto;
-    padding: 0 20px;
-}
-
-.grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.card {
-    background: white;
-    border: 1px solid #dce2e8;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-}
-
-.card h2 {
-    margin-top: 0;
-    font-size: 18px;
-}
-
-.info {
-    color: #697586;
-    font-size: 13px;
-    margin-bottom: 12px;
-}
-
-textarea {
-    width: 100%;
-    min-height: 360px;
-    resize: vertical;
-
-    border: 1px solid #cbd3dc;
-    border-radius: 8px;
-
-    padding: 12px;
-
-    font-family: Consolas, monospace;
-    font-size: 12px;
-
-    outline: none;
-}
-
-textarea:focus {
-    border-color: #1769d1;
-}
-
-button {
-    border: none;
-    border-radius: 8px;
-
-    padding: 12px 18px;
-
-    margin-right: 8px;
-    margin-bottom: 10px;
-
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.btn-primary {
-    background: #1769d1;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #0d55ad;
-}
-
-.btn-secondary {
-    background: #e8edf3;
-    color: #243447;
-}
-
-.status {
-    padding: 13px;
-    border-radius: 8px;
-    margin: 15px 0;
-}
-
-.status-info {
-    background: #edf5ff;
-    color: #16518f;
-}
-
-.status-ok {
-    background: #eaf8f0;
-    color: #087443;
-}
-
-.status-error {
-    background: #fff0ef;
-    color: #b42318;
-}
-
-.stats {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.stat {
-    background: white;
-    border: 1px solid #dce2e8;
-    border-radius: 9px;
-    padding: 13px;
-}
-
-.stat strong {
-    display: block;
-    font-size: 23px;
-}
-
-.stat span {
-    color: #697586;
-    font-size: 12px;
-}
-
-.table-container {
-    overflow-x: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-}
-
-th,
-td {
-    border-bottom: 1px solid #e4e8ed;
-    padding: 10px;
-    text-align: left;
-    white-space: nowrap;
-}
-
-th {
-    background: #f6f8fa;
-}
-
-.badge {
-    display: inline-block;
-    padding: 4px 9px;
-    border-radius: 20px;
-    font-weight: bold;
-    font-size: 11px;
-}
-
-.badge-zone {
-    background: #e8f0ff;
-    color: #1556a8;
-}
-
-.badge-at {
-    background: #fff0ef;
-    color: #b42318;
-}
-
-.badge-hj {
-    background: #eaf8f0;
-    color: #087443;
-}
-
-.badge-ft {
-    background: #fff5df;
-    color: #9a5a00;
-}
-
-.badge-ok {
-    background: #eaf8f0;
-    color: #087443;
-}
-
-.badge-error {
-    background: #fff0ef;
-    color: #b42318;
-}
-
-.badge-none {
-    background: #edf0f3;
-    color: #687386;
-}
-
-pre {
-    white-space: pre-wrap;
-    word-break: break-word;
-}
-
+* { box-sizing: border-box; }
+body { margin: 0; background: #f4f6f8; font-family: Arial, Helvetica, sans-serif; color: #172033; }
+header { background: #172b4d; color: white; padding: 22px 30px; }
+header h1 { margin: 0; font-size: 25px; }
+header p { margin: 7px 0 0; color: #d5deeb; }
+.container { max-width: 1450px; margin: 25px auto; padding: 0 20px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.card { background: white; border: 1px solid #dce2e8; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.card h2 { margin-top: 0; font-size: 18px; }
+.info { color: #697586; font-size: 13px; margin-bottom: 12px; }
+textarea { width: 100%; min-height: 360px; resize: vertical; border: 1px solid #cbd3dc; border-radius: 8px; padding: 12px; font-family: Consolas, monospace; font-size: 12px; outline: none; }
+textarea:focus { border-color: #1769d1; }
+button { border: none; border-radius: 8px; padding: 12px 18px; margin-right: 8px; margin-bottom: 10px; font-weight: bold; cursor: pointer; }
+.btn-primary { background: #1769d1; color: white; }
+.btn-primary:hover { background: #0d55ad; }
+.btn-secondary { background: #e8edf3; color: #243447; }
+.status { padding: 13px; border-radius: 8px; margin: 15px 0; }
+.status-info { background: #edf5ff; color: #16518f; }
+.status-ok { background: #eaf8f0; color: #087443; }
+.status-error { background: #fff0ef; color: #b42318; }
+.stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+.stat { background: white; border: 1px solid #dce2e8; border-radius: 9px; padding: 13px; }
+.stat strong { display: block; font-size: 23px; }
+.stat span { color: #697586; font-size: 12px; }
+.table-container { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { border-bottom: 1px solid #e4e8ed; padding: 10px; text-align: left; white-space: nowrap; }
+th { background: #f6f8fa; }
+.badge { display: inline-block; padding: 4px 9px; border-radius: 20px; font-weight: bold; font-size: 11px; }
+.badge-zone { background: #e8f0ff; color: #1556a8; }
+.badge-at { background: #fff0ef; color: #b42318; }
+.badge-hj { background: #eaf8f0; color: #087443; }
+.badge-ft { background: #fff5df; color: #9a5a00; }
+.badge-ok { background: #eaf8f0; color: #087443; }
+.badge-error { background: #fff0ef; color: #b42318; }
+.badge-none { background: #edf0f3; color: #687386; }
+.badge-manual { background: #eef2ff; color: #4338ca; }
+select.sel-inline { padding: 6px 8px; border: 1px solid #cbd3dc; border-radius: 6px; font-size: 12px; background: white; min-width: 70px; }
+pre { white-space: pre-wrap; word-break: break-word; }
 @media (max-width: 900px) {
-
-    .grid {
-        grid-template-columns: 1fr;
-    }
-
-    .stats {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
+  .grid { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
 }
-
 </style>
-
 </head>
-
-
 <body>
 
-
 <header>
-
-<h1>Gerador ZPL — Zona + Data Plano</h1>
-
-<p>
-Cruza o ZPL com os dados do WMS e adiciona automaticamente Zona e Plano.
-</p>
-
+  <h1>Gerador ZPL — Zona + Data Plano</h1>
+  <p>Cruza o ZPL com os dados do WMS e adiciona automaticamente Zona e Plano. Ajuste manualmente onde precisar.</p>
 </header>
-
 
 <div class="container">
 
+  <div class="grid">
+    <div class="card">
+      <h2>1. ZPL</h2>
+      <div class="info">Cole o ZPL original gerado para os pedidos.</div>
+      <textarea id="zplInput" placeholder="Cole o ZPL aqui..."></textarea>
+    </div>
+    <div class="card">
+      <h2>2. WMS</h2>
+      <div class="info">Cole os dados copiados do WMS. O sistema identifica automaticamente pedido, tote, zona e plano.</div>
+      <textarea id="wmsInput" placeholder="Cole os dados do WMS aqui..."></textarea>
+    </div>
+  </div>
 
-<!-- =====================================================
-     ENTRADAS
-===================================================== -->
+  <button class="btn-primary" onclick="processar()">PROCESSAR</button>
+  <button class="btn-secondary" onclick="carregarExemplo()">CARREGAR EXEMPLO</button>
+  <button class="btn-secondary" onclick="limparTudo()">LIMPAR</button>
 
-<div class="grid">
+  <div id="status" class="status status-info">Pronto para processar.</div>
 
+  <div class="stats">
+    <div class="stat"><strong id="totalZPL">0</strong><span>Etiquetas ZPL</span></div>
+    <div class="stat"><strong id="encontrados">0</strong><span>Pedidos encontrados</span></div>
+    <div class="stat"><strong id="zonas">0</strong><span>Zonas identificadas</span></div>
+    <div class="stat"><strong id="planos">0</strong><span>Planos identificados</span></div>
+    <div class="stat"><strong id="pendencias">0</strong><span>Pendências</span></div>
+  </div>
 
-<div class="card">
+  <div class="card">
+    <h2>3. Conferência do cruzamento</h2>
+    <div class="info">Zona e Plano vêm do WMS quando encontrados. Pode ajustar manualmente em qualquer linha — o ZPL abaixo é atualizado na hora.</div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Tote ZPL</th><th>Pedido ZPL</th><th>Tote WMS</th>
+            <th>Pedido WMS</th><th>Zona</th><th>Plano</th><th>Correspondência</th>
+          </tr>
+        </thead>
+        <tbody id="resultadoTabela">
+          <tr><td colspan="8">Nenhum processamento realizado.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-<h2>1. ZPL</h2>
-
-<div class="info">
-Cole o ZPL original gerado para os pedidos.
-</div>
-
-<textarea
-id="zplInput"
-placeholder="Cole o ZPL aqui..."
-></textarea>
-
-</div>
-
-
-<div class="card">
-
-<h2>2. WMS</h2>
-
-<div class="info">
-Cole os dados copiados do WMS. O sistema identifica automaticamente pedido, tote, zona e plano.
-</div>
-
-<textarea
-id="wmsInput"
-placeholder="Cole os dados do WMS aqui..."
-></textarea>
-
-</div>
-
-
-</div>
-
-
-<!-- =====================================================
-     BOTÕES
-===================================================== -->
-
-<button
-class="btn-primary"
-onclick="processar()"
->
-PROCESSAR
-</button>
-
-
-<button
-class="btn-secondary"
-onclick="carregarExemplo()"
->
-CARREGAR EXEMPLO
-</button>
-
-
-<button
-class="btn-secondary"
-onclick="limparTudo()"
->
-LIMPAR
-</button>
-
-
-<!-- =====================================================
-     STATUS
-===================================================== -->
-
-<div
-id="status"
-class="status status-info"
->
-Pronto para processar.
-</div>
-
-
-<!-- =====================================================
-     ESTATÍSTICAS
-===================================================== -->
-
-<div class="stats">
-
-
-<div class="stat">
-
-<strong id="totalZPL">0</strong>
-
-<span>Etiquetas ZPL</span>
+  <div class="card">
+    <h2>4. ZPL atualizado</h2>
+    <div class="info">Zona e Plano são adicionados sem alterar os dados originais da etiqueta.</div>
+    <textarea id="zplOutput" readonly style="min-height:500px;"></textarea>
+    <br><br>
+    <button class="btn-primary" onclick="copiarZPL()">COPIAR ZPL</button>
+    <button class="btn-secondary" onclick="baixarZPL()">BAIXAR .ZPL</button>
+  </div>
 
 </div>
-
-
-<div class="stat">
-
-<strong id="encontrados">0</strong>
-
-<span>Pedidos encontrados</span>
-
-</div>
-
-
-<div class="stat">
-
-<strong id="zonas">0</strong>
-
-<span>Zonas identificadas</span>
-
-</div>
-
-
-<div class="stat">
-
-<strong id="planos">0</strong>
-
-<span>Planos identificados</span>
-
-</div>
-
-
-<div class="stat">
-
-<strong id="pendencias">0</strong>
-
-<span>Pendências</span>
-
-</div>
-
-
-</div>
-
-
-<!-- =====================================================
-     CONFERÊNCIA
-===================================================== -->
-
-<div class="card">
-
-<h2>3. Conferência do cruzamento</h2>
-
-<div class="info">
-A Zona e o Plano abaixo vêm diretamente do bloco correspondente no WMS.
-</div>
-
-
-<div class="table-container">
-
-<table>
-
-<thead>
-
-<tr>
-
-<th>#</th>
-<th>Tote ZPL</th>
-<th>Pedido ZPL</th>
-<th>Tote WMS</th>
-<th>Pedido WMS</th>
-<th>Zona WMS</th>
-<th>Plano</th>
-<th>Correspondência</th>
-
-</tr>
-
-</thead>
-
-
-<tbody id="resultadoTabela">
-
-<tr>
-
-<td colspan="8">
-Nenhum processamento realizado.
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-
-<!-- =====================================================
-     ZPL RESULTADO
-===================================================== -->
-
-<div class="card">
-
-<h2>4. ZPL atualizado</h2>
-
-<div class="info">
-Zona e Plano são adicionados sem alterar os dados originais da etiqueta.
-</div>
-
-<textarea
-id="zplOutput"
-readonly
-style="min-height:500px;"
-></textarea>
-
-<br><br>
-
-
-<button
-class="btn-primary"
-onclick="copiarZPL()"
->
-COPIAR ZPL
-</button>
-
-
-<button
-class="btn-secondary"
-onclick="baixarZPL()"
->
-BAIXAR .ZPL
-</button>
-
-</div>
-
-
-</div>
-
 
 <script>
 
+const OPCOES_ZONA = ['', 'PJ', 'Z1', 'Z3', 'Z4', 'Z5', 'Z6', 'Z7', 'EC', 'VD'];
+const OPCOES_PLANO = ['', 'AT', 'HJ', 'FT'];
 
-/* =====================================================
-   NORMALIZAÇÃO
-===================================================== */
+// Estado mantido entre PROCESSAR e edições manuais dos selects.
+let estadoAtual = { dadosZPL: null, resultados: [] };
+
+/* ===================== NORMALIZAÇÃO ===================== */
 
 function normalizar(texto) {
-
-    return String(texto || "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim();
-
+  return String(texto || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
-
 
 function somenteNumeros(texto) {
-
-    return String(texto || "")
-        .replace(/\D/g, "");
-
+  return String(texto || "").replace(/\D/g, "");
 }
 
-
-/* =====================================================
-   PEDIDO
-===================================================== */
+/* ===================== PEDIDO / TOTE ===================== */
 
 function extrairPedido(texto) {
-
-    let encontrado =
-        String(texto || "").match(
-            /#?\d{7,}/
-        );
-
-    if (!encontrado) {
-        return "";
-    }
-
-    return somenteNumeros(
-        encontrado[0]
-    );
-
+  let encontrado = String(texto || "").match(/#?\d{7,}/);
+  return encontrado ? somenteNumeros(encontrado[0]) : "";
 }
-
-
-/* =====================================================
-   TOTE
-===================================================== */
 
 function extrairTote(texto) {
-
-    let encontrado =
-        String(texto || "").match(
-            /\btote\s*\d+\b/i
-        );
-
-    if (!encontrado) {
-        return "";
-    }
-
-    return encontrado[0]
-        .replace(/\s+/g, "")
-        .toLowerCase();
-
+  let encontrado = String(texto || "").match(/\btote\s*\d+\b/i);
+  return encontrado ? encontrado[0].replace(/\s+/g, "").toLowerCase() : "";
 }
 
-
-/* =====================================================
-   ZONA
-===================================================== */
+/* ===================== ZONA ===================== */
 
 function identificarZona(texto) {
+  let t = normalizar(texto);
 
-    let t =
-        normalizar(texto);
+  // FIX: "PJ" nunca era verificado antes — adicionado.
+  if (/\bpj\b/.test(t)) {
+    return "PJ";
+  }
 
+  if (t.includes("venda directa") || t.includes("venda direta")) {
+    return "VD";
+  }
 
-    /*
-        VENDA DIRETA
-    */
+  if (t.includes("ecommerce") || t.includes("e-commerce") || t.includes("e commerce")) {
+    return "EC";
+  }
 
-    if (
-        t.includes("venda directa") ||
-        t.includes("venda direta")
-    ) {
+  let resultado = t.match(/\bnatura\s+z\s*(\d+)\b/);
+  if (resultado) {
+    return "Z" + resultado[1];
+  }
 
-        return "VD";
+  resultado = t.match(/\bz\s*(\d+)\b/);
+  if (resultado) {
+    return "Z" + resultado[1];
+  }
 
-    }
-
-
-    /*
-        E-COMMERCE
-    */
-
-    if (
-        t.includes("ecommerce") ||
-        t.includes("e-commerce") ||
-        t.includes("e commerce")
-    ) {
-
-        return "EC";
-
-    }
-
-
-    /*
-        NATURA Z1
-        NATURA Z3
-        NATURA Z4
-        etc.
-    */
-
-    let resultado =
-        t.match(
-            /\bnatura\s+z\s*(\d+)\b/
-        );
-
-
-    if (resultado) {
-
-        return "Z" + resultado[1];
-
-    }
-
-
-    /*
-        Segunda tentativa.
-        Caso o WMS tenha alguma pequena
-        alteração na descrição.
-    */
-
-    resultado =
-        t.match(
-            /\bz\s*(\d+)\b/
-        );
-
-
-    if (resultado) {
-
-        return "Z" + resultado[1];
-
-    }
-
-
-    return "";
-
+  return "";
 }
 
-
-/* =====================================================
-   PLANO
-===================================================== */
+/* ===================== PLANO ===================== */
 
 function identificarPlano(texto) {
+  let t = normalizar(texto);
 
-    let t =
-        normalizar(texto);
+  if (/ha\s+\d+\s*(hora|horas|dia|dias)\b/.test(t)) {
+    return "AT";
+  }
 
+  if (t.includes("ontem") || t.includes("anteontem")) {
+    return "AT";
+  }
 
-    /*
-        ATRASADO
-    */
+  if (t.includes("hoje")) {
+    return "HJ";
+  }
 
-    if (
-        /ha\s+\d+\s*(hora|horas|dia|dias)\b/.test(t)
-    ) {
+  if (t.includes("amanha")) {
+    return "FT";
+  }
 
-        return "AT";
+  const dias = { domingo: 0, segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6 };
+  let hoje = new Date().getDay();
 
+  for (let nome in dias) {
+    if (t.includes(nome)) {
+      let destino = dias[nome];
+      // FIX: usar módulo em vez de subtração direta. Um prazo nunca aponta
+      // pra um dia da semana que já passou — se "destino - hoje" der negativo,
+      // é porque se refere à próxima ocorrência (semana que vem), ou seja FT,
+      // nunca AT. Só é HJ quando o dia mencionado é exatamente hoje.
+      let diferenca = ((destino - hoje) % 7 + 7) % 7;
+      return diferenca === 0 ? "HJ" : "FT";
     }
-
-
-    /*
-        ONTEM
-    */
-
-    if (
-        t.includes("ontem") ||
-        t.includes("anteontem")
-    ) {
-
-        return "AT";
-
-    }
-
-
-    /*
-        HOJE
-    */
-
-    if (
-        t.includes("hoje")
-    ) {
-
-        return "HJ";
-
-    }
-
-
-    /*
-        AMANHÃ
-    */
-
-    if (
-        t.includes("amanha")
-    ) {
-
-        return "FT";
-
-    }
-
-
-    /*
-        DIAS DA SEMANA
-    */
-
-    const dias = {
-
-        domingo: 0,
-        segunda: 1,
-        terca: 2,
-        quarta: 3,
-        quinta: 4,
-        sexta: 5,
-        sabado: 6
-
-    };
-
-
-    let hoje =
-        new Date().getDay();
-
-
-    for (
-        let nome in dias
-    ) {
-
-        if (
-            t.includes(nome)
-        ) {
-
-            let destino =
-                dias[nome];
-
-
-            let diferenca =
-                destino - hoje;
-
-
-            if (
-                diferenca === 0
-            ) {
-
-                return "HJ";
-
-            }
-
-
-            if (
-                diferenca > 0
-            ) {
-
-                return "FT";
-
-            }
-
-
-            return "AT";
-
-        }
-
-    }
-
-
-    /*
-        DATA EXPLÍCITA
-    */
-
-    let data =
-        t.match(
-            /\b(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})\b/
-        );
-
-
-    if (data) {
-
-        let dataDestino =
-            new Date(
-                Number(data[3]),
-                Number(data[2]) - 1,
-                Number(data[1])
-            );
-
-
-        let agora =
-            new Date();
-
-
-        let hojeData =
-            new Date(
-                agora.getFullYear(),
-                agora.getMonth(),
-                agora.getDate()
-            );
-
-
-        if (
-            dataDestino < hojeData
-        ) {
-
-            return "AT";
-
-        }
-
-
-        if (
-            dataDestino.getTime() ===
-            hojeData.getTime()
-        ) {
-
-            return "HJ";
-
-        }
-
-
-        return "FT";
-
-    }
-
-
-    return "";
-
+  }
+
+  let data = t.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})\b/);
+  if (data) {
+    let dataDestino = new Date(Number(data[3]), Number(data[2]) - 1, Number(data[1]));
+    let agora = new Date();
+    let hojeData = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    if (dataDestino < hojeData) return "AT";
+    if (dataDestino.getTime() === hojeData.getTime()) return "HJ";
+    return "FT";
+  }
+
+  return "";
 }
 
-
-/* =====================================================
-   CRIAR REGISTRO WMS
-===================================================== */
+/* ===================== REGISTRO WMS ===================== */
 
 function criarRegistroWMS(bloco) {
+  let texto = Array.isArray(bloco) ? bloco.join(" | ") : String(bloco || "");
+  let pedido = extrairPedido(texto);
+  let tote = extrairTote(texto);
+  let zona = identificarZona(texto);
+  let plano = identificarPlano(texto);
 
-    let texto =
-        Array.isArray(bloco)
-        ? bloco.join(" | ")
-        : String(bloco || "");
+  if (!pedido && !tote) return null;
 
-
-    let pedido =
-        extrairPedido(texto);
-
-
-    let tote =
-        extrairTote(texto);
-
-
-    let zona =
-        identificarZona(texto);
-
-
-    let plano =
-        identificarPlano(texto);
-
-
-    if (
-        !pedido &&
-        !tote
-    ) {
-
-        return null;
-
-    }
-
-
-    return {
-
-        pedido: pedido,
-
-        tote: tote,
-
-        zona: zona,
-
-        plano: plano,
-
-        texto: texto
-
-    };
-
+  return { pedido, tote, zona, plano, texto };
 }
 
-
-/* =====================================================
-   LER WMS
-===================================================== */
+/* ===================== LER WMS ===================== */
 
 function lerWMS(texto) {
-
-    let bruto =
-        String(texto || "")
-        .replace(/\r/g, "")
-        .trim();
-
-
-    if (!bruto) {
-
-        return [];
-
-    }
-
-
-    let linhas =
-        bruto
-        .split("\n")
-        .map(
-            function(linha) {
-
-                return linha.trim();
-
-            }
-        )
-        .filter(
-            function(linha) {
-
-                return linha !== "";
-
-            }
-        );
-
-
-    let registros = [];
-
-
-    /*
-        =================================================
-        FORMATO TABELA
-        =================================================
-
-        | Natura Porto Alegre | #0264041080 |
-        | Há 14 horas | NATURA - Natura Z7 |
-        | natura | tote14838 | Não |
-    */
-
-
-    let possuiPipe =
-        linhas.some(
-            function(linha) {
-
-                return linha.includes("|");
-
-            }
-        );
-
-
-    if (possuiPipe) {
-
-        linhas.forEach(
-            function(linha) {
-
-
-                let limpa =
-                    linha
-                    .replace(/^\s*\|/, "")
-                    .replace(/\|\s*$/, "");
-
-
-                let colunas =
-                    limpa
-                    .split("|")
-                    .map(
-                        function(c) {
-
-                            return c.trim();
-
-                        }
-                    )
-                    .filter(
-                        function(c) {
-
-                            return c !== "";
-
-                        }
-                    );
-
-
-                if (!colunas.length) {
-                    return;
-                }
-
-
-                /*
-                    Ignora separadores
-                */
-
-                if (
-                    colunas.every(
-                        function(c) {
-
-                            return /^[-: ]+$/.test(c);
-
-                        }
-                    )
-                ) {
-
-                    return;
-
-                }
-
-
-                let registro =
-                    criarRegistroWMS(
-                        colunas
-                    );
-
-
-                if (
-                    registro &&
-                    (
-                        registro.pedido ||
-                        registro.tote
-                    )
-                ) {
-
-                    registros.push(
-                        registro
-                    );
-
-                }
-
-            }
-        );
-
-
-        return registros;
-
-    }
-
-
-    /*
-        =================================================
-        FORMATO VERTICAL
-        =================================================
-
-        Natura Porto Alegre
-        #0264034415
-        Amanhã às 23:59
-        NATURA - Natura Z5
-        natura
-        tote13801
-        Não
-        Duarte Guilherme
-        Picking
-
-        Natura Porto Alegre
-        #0264034550
-        Amanhã às 23:59
-        NATURA - Natura Z3
-        natura
-        tote16116
-        Não
-        Duarte Guilherme
-        Picking
-    */
-
-
-    let blocos = [];
-
-    let atual = [];
-
-
-    linhas.forEach(
-        function(linha) {
-
-
-            /*
-                Novo pedido
-            */
-
-            if (
-                /^#?\d{7,}$/.test(linha)
-            ) {
-
-
-                if (
-                    atual.length
-                ) {
-
-                    blocos.push(
-                        atual
-                    );
-
-                }
-
-
-                atual = [
-                    linha
-                ];
-
-
-                return;
-
-            }
-
-
-            /*
-                Adiciona conteúdo
-                ao pedido atual.
-            */
-
-            if (
-                atual.length
-            ) {
-
-                atual.push(
-                    linha
-                );
-
-            }
-
-        }
-    );
-
-
-    if (
-        atual.length
-    ) {
-
-        blocos.push(
-            atual
-        );
-
-    }
-
-
-    /*
-        Criar registros
-    */
-
-    blocos.forEach(
-        function(bloco) {
-
-            let registro =
-                criarRegistroWMS(
-                    bloco
-                );
-
-
-            if (
-                registro
-            ) {
-
-                registros.push(
-                    registro
-                );
-
-            }
-
-        }
-    );
-
-
+  let bruto = String(texto || "").replace(/\r/g, "").trim();
+  if (!bruto) return [];
+
+  let linhas = bruto.split("\n").map(l => l.trim()).filter(l => l !== "");
+  let registros = [];
+
+  let possuiPipe = linhas.some(l => l.includes("|"));
+
+  if (possuiPipe) {
+    linhas.forEach(linha => {
+      let limpa = linha.replace(/^\s*\|/, "").replace(/\|\s*$/, "");
+      let colunas = limpa.split("|").map(c => c.trim()).filter(c => c !== "");
+      if (!colunas.length) return;
+      if (colunas.every(c => /^[-: ]+$/.test(c))) return;
+
+      let registro = criarRegistroWMS(colunas);
+      if (registro && (registro.pedido || registro.tote)) registros.push(registro);
+    });
     return registros;
+  }
 
+  // Formato vertical (bloco de linhas por pedido)
+  let blocos = [];
+  let atual = [];
+
+  linhas.forEach(linha => {
+    if (/^#?\d{7,}$/.test(linha)) {
+      if (atual.length) blocos.push(atual);
+      atual = [linha];
+      return;
+    }
+    if (atual.length) atual.push(linha);
+  });
+
+  if (atual.length) blocos.push(atual);
+
+  blocos.forEach(bloco => {
+    let registro = criarRegistroWMS(bloco);
+    if (registro) registros.push(registro);
+  });
+
+  return registros;
 }
 
-
-/* =====================================================
-   LER ZPL
-===================================================== */
+/* ===================== LER ZPL ===================== */
 
 function lerZPL(texto) {
-
-    let blocos =
-        String(texto || "").match(
-            /\^XA[\s\S]*?\^XZ/gi
-        ) || [];
-
-
-    let etiquetas = [];
-
-
-    blocos.forEach(
-        function(bloco, indice) {
-
-
-            /*
-                =============================================
-                LADO ESQUERDO
-                =============================================
-            */
-
-            let toteEsquerdo =
-                bloco.match(
-                    /\^FO20,20\^FD(tote\d+)\^FS/i
-                );
-
-
-            if (
-                toteEsquerdo
-            ) {
-
-                let pedido =
-                    bloco.match(
-                        /\^FO20,135\^FD(\d+)\^FS/i
-                    );
-
-
-                let posicao =
-                    bloco.match(
-                        /\^FO260,25\^FD([^\^]*)\^FS/i
-                    );
-
-
-                let volume =
-                    bloco.match(
-                        /\^A0R,60,60\^FO320,30\^FD([^\^]*)\^FS/i
-                    );
-
-
-                etiquetas.push({
-
-                    bloco: indice,
-
-                    lado: "esquerdo",
-
-                    x: 20,
-
-                    tote:
-                        toteEsquerdo[1]
-                        .toLowerCase(),
-
-                    pedido:
-                        pedido
-                        ? pedido[1]
-                        : "",
-
-                    posicao:
-                        posicao
-                        ? posicao[1]
-                        : "",
-
-                    volume:
-                        volume
-                        ? volume[1]
-                        : ""
-
-                });
-
-            }
-
-
-            /*
-                =============================================
-                LADO DIREITO
-                =============================================
-            */
-
-            let toteDireito =
-                bloco.match(
-                    /\^FO440,20\^FD(tote\d+)\^FS/i
-                );
-
-
-            if (
-                toteDireito
-            ) {
-
-                let pedido =
-                    bloco.match(
-                        /\^FO440,135\^FD(\d+)\^FS/i
-                    );
-
-
-                let posicao =
-                    bloco.match(
-                        /\^FO680,25\^FD([^\^]*)\^FS/i
-                    );
-
-
-                let volume =
-                    bloco.match(
-                        /\^A0R,60,60\^FO740,30\^FD([^\^]*)\^FS/i
-                    );
-
-
-                etiquetas.push({
-
-                    bloco: indice,
-
-                    lado: "direito",
-
-                    x: 440,
-
-                    tote:
-                        toteDireito[1]
-                        .toLowerCase(),
-
-                    pedido:
-                        pedido
-                        ? pedido[1]
-                        : "",
-
-                    posicao:
-                        posicao
-                        ? posicao[1]
-                        : "",
-
-                    volume:
-                        volume
-                        ? volume[1]
-                        : ""
-
-                });
-
-            }
-
-        }
-    );
-
-
-    return {
-
-        blocos: blocos,
-
-        etiquetas: etiquetas
-
-    };
-
-}
-
-
-/* =====================================================
-   LOCALIZAR REGISTRO NO WMS
-===================================================== */
-
-function encontrarRegistro(
-    etiqueta,
-    registros
-) {
-
-
-    /*
-        NORMALIZA O TOTE
-    */
-
-    let toteZPL =
-        normalizar(
-            etiqueta.tote
-        );
-
-
-    /*
-        NORMALIZA O PEDIDO
-    */
-
-    let pedidoZPL =
-        somenteNumeros(
-            etiqueta.pedido
-        );
-
-
-    /*
-        =============================================
-        1. PRIMEIRA PRIORIDADE:
-        PEDIDO
-        =============================================
-    */
-
-    if (
-        pedidoZPL
-    ) {
-
-        let porPedido =
-            registros.find(
-                function(registro) {
-
-                    return (
-                        somenteNumeros(
-                            registro.pedido
-                        ) === pedidoZPL
-                    );
-
-                }
-            );
-
-
-        if (
-            porPedido
-        ) {
-
-            return {
-
-                registro: porPedido,
-
-                metodo: "PEDIDO"
-
-            };
-
-        }
-
+  let blocos = String(texto || "").match(/\^XA[\s\S]*?\^XZ/gi) || [];
+  let etiquetas = [];
+
+  blocos.forEach((bloco, indice) => {
+    let toteEsquerdo = bloco.match(/\^FO20,20\^FD(tote\d+)\^FS/i);
+    if (toteEsquerdo) {
+      let pedido = bloco.match(/\^FO20,135\^FD(\d+)\^FS/i);
+      let posicao = bloco.match(/\^FO260,25\^FD([^\^]*)\^FS/i);
+      let volume = bloco.match(/\^A0R,60,60\^FO320,30\^FD([^\^]*)\^FS/i);
+
+      etiquetas.push({
+        bloco: indice, lado: "esquerdo", x: 20,
+        tote: toteEsquerdo[1].toLowerCase(),
+        pedido: pedido ? pedido[1] : "",
+        posicao: posicao ? posicao[1] : "",
+        volume: volume ? volume[1] : ""
+      });
     }
 
+    let toteDireito = bloco.match(/\^FO440,20\^FD(tote\d+)\^FS/i);
+    if (toteDireito) {
+      let pedido = bloco.match(/\^FO440,135\^FD(\d+)\^FS/i);
+      let posicao = bloco.match(/\^FO680,25\^FD([^\^]*)\^FS/i);
+      let volume = bloco.match(/\^A0R,60,60\^FO740,30\^FD([^\^]*)\^FS/i);
 
-    /*
-        =============================================
-        2. SEGUNDA PRIORIDADE:
-        TOTE
-        =============================================
-    */
-
-    if (
-        toteZPL
-    ) {
-
-        let porTote =
-            registros.find(
-                function(registro) {
-
-                    return (
-                        normalizar(
-                            registro.tote
-                        ) === toteZPL
-                    );
-
-                }
-            );
-
-
-        if (
-            porTote
-        ) {
-
-            return {
-
-                registro: porTote,
-
-                metodo: "TOTE"
-
-            };
-
-        }
-
+      etiquetas.push({
+        bloco: indice, lado: "direito", x: 440,
+        tote: toteDireito[1].toLowerCase(),
+        pedido: pedido ? pedido[1] : "",
+        posicao: posicao ? posicao[1] : "",
+        volume: volume ? volume[1] : ""
+      });
     }
+  });
 
-
-    /*
-        =============================================
-        NÃO ENCONTROU
-        =============================================
-    */
-
-    return null;
-
+  return { blocos, etiquetas };
 }
 
+/* ===================== LOCALIZAR REGISTRO ===================== */
 
-/* =====================================================
-   PROCESSAR
-===================================================== */
+function encontrarRegistro(etiqueta, registros) {
+  let toteZPL = normalizar(etiqueta.tote);
+  let pedidoZPL = somenteNumeros(etiqueta.pedido);
+
+  if (pedidoZPL) {
+    let porPedido = registros.find(r => somenteNumeros(r.pedido) === pedidoZPL);
+    if (porPedido) return { registro: porPedido, metodo: "PEDIDO" };
+  }
+
+  if (toteZPL) {
+    let porTote = registros.find(r => normalizar(r.tote) === toteZPL);
+    if (porTote) return { registro: porTote, metodo: "TOTE" };
+  }
+
+  return null;
+}
+
+/* ===================== GERAR ZPL (extraído para reuso) ===================== */
+
+function gerarZPLCompleto(dadosZPL, resultados) {
+  return dadosZPL.blocos.map((bloco, indiceBloco) => {
+    let etiquetasBloco = resultados.filter(item => item.etiqueta.bloco === indiceBloco);
+    let insercoes = [];
+
+    etiquetasBloco.forEach(item => {
+      let correspondencia = item.correspondencia;
+      if (!correspondencia) return;
+
+      let registro = correspondencia.registro;
+      let x = item.etiqueta.lado === "esquerdo" ? 20 : 440;
+
+      if (registro.zona) {
+        insercoes.push("^CF0,60");
+        insercoes.push("^FO" + x + ",190^FDZONA " + registro.zona + "^FS");
+      }
+      if (registro.plano) {
+        insercoes.push("^CF0,60");
+        insercoes.push("^FO" + x + ",260^FDPLANO " + registro.plano + "^FS");
+      }
+    });
+
+    if (insercoes.length) {
+      let textoInsercao = "\n" + insercoes.join("\n") + "\n";
+      if (/\^PQ\d+/i.test(bloco)) {
+        bloco = bloco.replace(/\^PQ\d+/i, textoInsercao + "$&");
+      } else {
+        bloco = bloco.replace(/\^XZ/i, textoInsercao + "^XZ");
+      }
+    }
+
+    return bloco;
+  }).join("\n");
+}
+
+/* ===================== PROCESSAR ===================== */
 
 function processar() {
-
-    let zpl =
-        document
-        .getElementById("zplInput")
-        .value
-        .trim();
-
-
-    let wms =
-        document
-        .getElementById("wmsInput")
-        .value
-        .trim();
-
-
-    if (
-        !zpl
-    ) {
-
-        mostrarStatus(
-            "Cole o ZPL antes de processar.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    if (
-        !wms
-    ) {
-
-        mostrarStatus(
-            "Cole os dados do WMS antes de processar.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    /*
-        LÊ WMS
-    */
-
-    let registrosWMS =
-        lerWMS(wms);
-
-
-    /*
-        LÊ ZPL
-    */
-
-    let dadosZPL =
-        lerZPL(zpl);
-
-
-    /*
-        VALIDA ZPL
-    */
-
-    if (
-        !dadosZPL.etiquetas.length
-    ) {
-
-        mostrarStatus(
-            "Não encontrei totes/pedidos válidos no ZPL.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    /*
-        VALIDA WMS
-    */
-
-    if (
-        !registrosWMS.length
-    ) {
-
-        mostrarStatus(
-            "Não consegui identificar registros no WMS.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    /*
-        =============================================
-        CRUZAMENTO
-        =============================================
-    */
-
-    let resultados =
-        dadosZPL.etiquetas.map(
-            function(etiqueta) {
-
-                return {
-
-                    etiqueta: etiqueta,
-
-                    correspondencia:
-                        encontrarRegistro(
-                            etiqueta,
-                            registrosWMS
-                        )
-
-                };
-
-            }
-        );
-
-
-    /*
-        =============================================
-        GERAR ZPL
-        =============================================
-    */
-
-    let novoZPL =
-        dadosZPL.blocos
-        .map(
-            function(bloco, indiceBloco) {
-
-
-                /*
-                    Pega somente as etiquetas
-                    pertencentes a este ^XA ^XZ
-                */
-
-                let etiquetasBloco =
-                    resultados.filter(
-                        function(item) {
-
-                            return (
-                                item.etiqueta.bloco ===
-                                indiceBloco
-                            );
-
-                        }
-                    );
-
-
-                let insercoes = [];
-
-
-                etiquetasBloco.forEach(
-                    function(item) {
-
-
-                        let etiqueta =
-                            item.etiqueta;
-
-
-                        let correspondencia =
-                            item.correspondencia;
-
-
-                        if (
-                            !correspondencia
-                        ) {
-
-                            return;
-
-                        }
-
-
-                        let registro =
-                            correspondencia.registro;
-
-
-                        /*
-                            =================================
-                            ESQUERDO
-                            =================================
-                        */
-
-                        if (
-                            etiqueta.lado ===
-                            "esquerdo"
-                        ) {
-
-
-                            if (
-                                registro.zona
-                            ) {
-
-                                insercoes.push(
-                                    "^CF0,60"
-                                );
-
-                                insercoes.push(
-                                    "^FO20,190^FDZONA " +
-                                    registro.zona +
-                                    "^FS"
-                                );
-
-                            }
-
-
-                            if (
-                                registro.plano
-                            ) {
-
-                                insercoes.push(
-                                    "^CF0,60"
-                                );
-
-                                insercoes.push(
-                                    "^FO20,260^FDPLANO " +
-                                    registro.plano +
-                                    "^FS"
-                                );
-
-                            }
-
-                        }
-
-
-                        /*
-                            =================================
-                            DIREITO
-                            =================================
-                        */
-
-                        if (
-                            etiqueta.lado ===
-                            "direito"
-                        ) {
-
-
-                            if (
-                                registro.zona
-                            ) {
-
-                                insercoes.push(
-                                    "^CF0,60"
-                                );
-
-                                insercoes.push(
-                                    "^FO440,190^FDZONA " +
-                                    registro.zona +
-                                    "^FS"
-                                );
-
-                            }
-
-
-                            if (
-                                registro.plano
-                            ) {
-
-                                insercoes.push(
-                                    "^CF0,60"
-                                );
-
-                                insercoes.push(
-                                    "^FO440,260^FDPLANO " +
-                                    registro.plano +
-                                    "^FS"
-                                );
-
-                            }
-
-                        }
-
-                    }
-                );
-
-
-                /*
-                    =============================================
-                    INSERE ANTES DO ^PQ
-                    =============================================
-                */
-
-                if (
-                    insercoes.length
-                ) {
-
-                    let textoInsercao =
-                        "\n" +
-                        insercoes.join("\n") +
-                        "\n";
-
-
-                    if (
-                        /\^PQ\d+/i.test(bloco)
-                    ) {
-
-                        bloco =
-                            bloco.replace(
-                                /\^PQ\d+/i,
-                                textoInsercao +
-                                "$&"
-                            );
-
-                    }
-                    else {
-
-                        bloco =
-                            bloco.replace(
-                                /\^XZ/i,
-                                textoInsercao +
-                                "^XZ"
-                            );
-
-                    }
-
-                }
-
-
-                return bloco;
-
-            }
-        )
-        .join("\n");
-
-
-    /*
-        =============================================
-        MOSTRA RESULTADO
-        =============================================
-    */
-
-    document
-        .getElementById("zplOutput")
-        .value =
-        novoZPL;
-
-
-    /*
-        =============================================
-        MONTA TABELA
-        =============================================
-    */
-
-    montarTabela(
-        resultados
-    );
-
-
-    /*
-        =============================================
-        STATUS
-        =============================================
-    */
-
-    let encontrados =
-        resultados.filter(
-            function(item) {
-
-                return (
-                    item.correspondencia !== null
-                );
-
-            }
-        ).length;
-
-
-    let zonas =
-        resultados.filter(
-            function(item) {
-
-                return (
-                    item.correspondencia &&
-                    item.correspondencia.registro.zona
-                );
-
-            }
-        ).length;
-
-
-    let planos =
-        resultados.filter(
-            function(item) {
-
-                return (
-                    item.correspondencia &&
-                    item.correspondencia.registro.plano
-                );
-
-            }
-        ).length;
-
-
-    let pendencias =
-        resultados.length -
-        encontrados;
-
-
-    if (
-        pendencias === 0
-    ) {
-
-        mostrarStatus(
-            "Processamento concluído. Todos os pedidos do ZPL foram encontrados no WMS.",
-            "ok"
-        );
-
-    }
-    else {
-
-        mostrarStatus(
-            "Processamento concluído. " +
-            pendencias +
-            " etiqueta(s) não tiveram correspondência no WMS.",
-            "info"
-        );
-
-    }
-
-
-    /*
-        INDICADORES
-    */
-
-    document
-        .getElementById("totalZPL")
-        .textContent =
-        resultados.length;
-
-
-    document
-        .getElementById("encontrados")
-        .textContent =
-        encontrados;
-
-
-    document
-        .getElementById("zonas")
-        .textContent =
-        zonas;
-
-
-    document
-        .getElementById("planos")
-        .textContent =
-        planos;
-
-
-    document
-        .getElementById("pendencias")
-        .textContent =
-        pendencias;
-
+  let zpl = document.getElementById("zplInput").value.trim();
+  let wms = document.getElementById("wmsInput").value.trim();
+
+  if (!zpl) { mostrarStatus("Cole o ZPL antes de processar.", "error"); return; }
+  if (!wms) { mostrarStatus("Cole os dados do WMS antes de processar.", "error"); return; }
+
+  let registrosWMS = lerWMS(wms);
+  let dadosZPL = lerZPL(zpl);
+
+  if (!dadosZPL.etiquetas.length) { mostrarStatus("Não encontrei totes/pedidos válidos no ZPL.", "error"); return; }
+  if (!registrosWMS.length) { mostrarStatus("Não consegui identificar registros no WMS.", "error"); return; }
+
+  let resultados = dadosZPL.etiquetas.map(etiqueta => ({
+    etiqueta,
+    correspondencia: encontrarRegistro(etiqueta, registrosWMS)
+  }));
+
+  estadoAtual.dadosZPL = dadosZPL;
+  estadoAtual.resultados = resultados;
+
+  document.getElementById("zplOutput").value = gerarZPLCompleto(dadosZPL, resultados);
+  montarTabela(resultados);
+  atualizarIndicadores(resultados);
+
+  let pendencias = resultados.filter(r => r.correspondencia === null).length;
+  if (pendencias === 0) {
+    mostrarStatus("Processamento concluído. Todos os pedidos do ZPL foram encontrados no WMS.", "ok");
+  } else {
+    mostrarStatus("Processamento concluído. " + pendencias + " etiqueta(s) não tiveram correspondência automática — ajuste manualmente na tabela.", "info");
+  }
 }
 
+/* ===================== EDIÇÃO MANUAL ===================== */
 
-/* =====================================================
-   TABELA
-===================================================== */
+function onEditarCampo(indice, campo, valor) {
+  let item = estadoAtual.resultados[indice];
+  if (!item) return;
+
+  if (!item.correspondencia) {
+    item.correspondencia = {
+      registro: { pedido: item.etiqueta.pedido, tote: item.etiqueta.tote, zona: "", plano: "" },
+      metodo: "MANUAL"
+    };
+  } else if (item.correspondencia.metodo !== "MANUAL" && !item.correspondencia.metodo.includes("AJUSTE")) {
+    item.correspondencia.metodo = item.correspondencia.metodo + " + AJUSTE MANUAL";
+  }
+
+  item.correspondencia.registro[campo] = valor;
+
+  atualizarSaida();
+}
+
+function atualizarSaida() {
+  if (!estadoAtual.dadosZPL) return;
+
+  document.getElementById("zplOutput").value = gerarZPLCompleto(estadoAtual.dadosZPL, estadoAtual.resultados);
+  montarTabela(estadoAtual.resultados);
+  atualizarIndicadores(estadoAtual.resultados);
+}
+
+function atualizarIndicadores(resultados) {
+  let encontrados = resultados.filter(r => r.correspondencia !== null).length;
+  let zonas = resultados.filter(r => r.correspondencia && r.correspondencia.registro.zona).length;
+  let planos = resultados.filter(r => r.correspondencia && r.correspondencia.registro.plano).length;
+  let pendencias = resultados.length - encontrados;
+
+  document.getElementById("totalZPL").textContent = resultados.length;
+  document.getElementById("encontrados").textContent = encontrados;
+  document.getElementById("zonas").textContent = zonas;
+  document.getElementById("planos").textContent = planos;
+  document.getElementById("pendencias").textContent = pendencias;
+}
+
+/* ===================== TABELA ===================== */
+
+function criarSelect(opcoes, valorAtual, indice, campo) {
+  let options = opcoes.map(op => {
+    let selecionado = op === (valorAtual || "") ? " selected" : "";
+    return '<option value="' + op + '"' + selecionado + '>' + (op || "—") + "</option>";
+  }).join("");
+
+  return '<select class="sel-inline" onchange="onEditarCampo(' + indice + ", '" + campo + "', this.value)\">" + options + "</select>";
+}
 
 function montarTabela(resultados) {
+  let tbody = document.getElementById("resultadoTabela");
+  tbody.innerHTML = "";
 
-    let tbody =
-        document
-        .getElementById("resultadoTabela");
+  resultados.forEach((item, indice) => {
+    let etiqueta = item.etiqueta;
+    let correspondencia = item.correspondencia;
+    let registro = correspondencia ? correspondencia.registro : null;
 
+    let zonaSelect = criarSelect(OPCOES_ZONA, registro ? registro.zona : "", indice, "zona");
+    let planoSelect = criarSelect(OPCOES_PLANO, registro ? registro.plano : "", indice, "plano");
 
-    tbody.innerHTML = "";
+    let status;
+    if (correspondencia) {
+      let ehManual = correspondencia.metodo === "MANUAL" || correspondencia.metodo.includes("AJUSTE");
+      let rotulo = correspondencia.metodo === "MANUAL" ? "MANUAL" : correspondencia.metodo.includes("AJUSTE") ? correspondencia.metodo : "OK — " + correspondencia.metodo;
+      status = '<span class="badge ' + (ehManual ? "badge-manual" : "badge-ok") + '">' + rotulo + "</span>";
+    } else {
+      status = '<span class="badge badge-error">NÃO ENCONTRADO</span>';
+    }
 
+    let linha = document.createElement("tr");
+    linha.innerHTML =
+      "<td>" + (indice + 1) + "</td>" +
+      "<td>" + (etiqueta.tote || "—") + "</td>" +
+      "<td>" + (etiqueta.pedido || "—") + "</td>" +
+      "<td>" + (registro ? registro.tote : "—") + "</td>" +
+      "<td>" + (registro ? registro.pedido : "—") + "</td>" +
+      "<td>" + zonaSelect + "</td>" +
+      "<td>" + planoSelect + "</td>" +
+      "<td>" + status + "</td>";
 
-    resultados.forEach(
-        function(item, indice) {
-
-
-            let etiqueta =
-                item.etiqueta;
-
-
-            let correspondencia =
-                item.correspondencia;
-
-
-            let registro =
-                correspondencia
-                ? correspondencia.registro
-                : null;
-
-
-            let linha =
-                document.createElement("tr");
-
-
-            /*
-                ZONA
-            */
-
-            let zona =
-                registro &&
-                registro.zona
-                ? '<span class="badge badge-zone">' +
-                  registro.zona +
-                  '</span>'
-                : '<span class="badge badge-none">—</span>';
-
-
-            /*
-                PLANO
-            */
-
-            let plano = "";
-
-
-            if (
-                registro &&
-                registro.plano
-            ) {
-
-                let classe =
-                    registro.plano === "AT"
-                    ? "badge-at"
-                    : registro.plano === "HJ"
-                    ? "badge-hj"
-                    : "badge-ft";
-
-
-                plano =
-                    '<span class="badge ' +
-                    classe +
-                    '">' +
-                    registro.plano +
-                    '</span>';
-
-            }
-            else {
-
-                plano =
-                    '<span class="badge badge-none">—</span>';
-
-            }
-
-
-            /*
-                CORRESPONDÊNCIA
-            */
-
-            let status = "";
-
-
-            if (
-                correspondencia
-            ) {
-
-                status =
-                    '<span class="badge badge-ok">' +
-                    'OK — ' +
-                    correspondencia.metodo +
-                    '</span>';
-
-            }
-            else {
-
-                status =
-                    '<span class="badge badge-error">' +
-                    'NÃO ENCONTRADO' +
-                    '</span>';
-
-            }
-
-
-            linha.innerHTML =
-
-                "<td>" +
-                (indice + 1) +
-                "</td>" +
-
-                "<td>" +
-                (etiqueta.tote || "—") +
-                "</td>" +
-
-                "<td>" +
-                (etiqueta.pedido || "—") +
-                "</td>" +
-
-                "<td>" +
-                (
-                    registro
-                    ? registro.tote
-                    : "—"
-                ) +
-                "</td>" +
-
-                "<td>" +
-                (
-                    registro
-                    ? registro.pedido
-                    : "—"
-                ) +
-                "</td>" +
-
-                "<td>" +
-                zona +
-                "</td>" +
-
-                "<td>" +
-                plano +
-                "</td>" +
-
-                "<td>" +
-                status +
-                "</td>";
-
-
-            tbody.appendChild(
-                linha
-            );
-
-        }
-    );
-
+    tbody.appendChild(linha);
+  });
 }
 
-
-/* =====================================================
-   COPIAR ZPL
-===================================================== */
+/* ===================== COPIAR / BAIXAR ===================== */
 
 function copiarZPL() {
+  let texto = document.getElementById("zplOutput").value;
+  if (!texto) return;
 
-    let texto =
-        document
-        .getElementById("zplOutput")
-        .value;
-
-
-    if (
-        !texto
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        navigator.clipboard
-    ) {
-
-        navigator.clipboard
-            .writeText(texto)
-            .then(
-                function() {
-
-                    mostrarStatus(
-                        "ZPL copiado.",
-                        "ok"
-                    );
-
-                }
-            )
-            .catch(
-                function() {
-
-                    copiarFallback(
-                        texto
-                    );
-
-                }
-            );
-
-    }
-    else {
-
-        copiarFallback(
-            texto
-        );
-
-    }
-
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(texto).then(
+      () => mostrarStatus("ZPL copiado.", "ok"),
+      () => copiarFallback(texto)
+    );
+  } else {
+    copiarFallback(texto);
+  }
 }
-
-
-/* =====================================================
-   COPIAR FALLBACK
-===================================================== */
 
 function copiarFallback(texto) {
-
-    let area =
-        document.createElement(
-            "textarea"
-        );
-
-
-    area.value =
-        texto;
-
-
-    document.body.appendChild(
-        area
-    );
-
-
-    area.select();
-
-
-    try {
-
-        document.execCommand(
-            "copy"
-        );
-
-
-        mostrarStatus(
-            "ZPL copiado.",
-            "ok"
-        );
-
-    }
-    catch (erro) {
-
-        mostrarStatus(
-            "Não foi possível copiar automaticamente.",
-            "error"
-        );
-
-    }
-
-
-    document.body.removeChild(
-        area
-    );
-
+  let area = document.createElement("textarea");
+  area.value = texto;
+  document.body.appendChild(area);
+  area.select();
+  try {
+    document.execCommand("copy");
+    mostrarStatus("ZPL copiado.", "ok");
+  } catch (erro) {
+    mostrarStatus("Não foi possível copiar automaticamente.", "error");
+  }
+  document.body.removeChild(area);
 }
-
-
-/* =====================================================
-   BAIXAR ZPL
-===================================================== */
 
 function baixarZPL() {
+  let texto = document.getElementById("zplOutput").value;
+  if (!texto) { mostrarStatus("Não existe ZPL para baixar.", "error"); return; }
 
-    let texto =
-        document
-        .getElementById("zplOutput")
-        .value;
-
-
-    if (
-        !texto
-    ) {
-
-        mostrarStatus(
-            "Não existe ZPL para baixar.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    let arquivo =
-        new Blob(
-            [texto],
-            {
-                type: "text/plain"
-            }
-        );
-
-
-    let link =
-        document.createElement(
-            "a"
-        );
-
-
-    link.href =
-        URL.createObjectURL(
-            arquivo
-        );
-
-
-    link.download =
-        "ZPL_atualizado.zpl";
-
-
-    document.body.appendChild(
-        link
-    );
-
-
-    link.click();
-
-
-    document.body.removeChild(
-        link
-    );
-
-
-    URL.revokeObjectURL(
-        link.href
-    );
-
+  let arquivo = new Blob([texto], { type: "text/plain" });
+  let link = document.createElement("a");
+  link.href = URL.createObjectURL(arquivo);
+  link.download = "ZPL_atualizado.zpl";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
 }
 
+/* ===================== STATUS ===================== */
 
-/* =====================================================
-   STATUS
-===================================================== */
-
-function mostrarStatus(
-    mensagem,
-    tipo
-) {
-
-    let status =
-        document.getElementById(
-            "status"
-        );
-
-
-    status.textContent =
-        mensagem;
-
-
-    status.className =
-        "status";
-
-
-    if (
-        tipo === "ok"
-    ) {
-
-        status.classList.add(
-            "status-ok"
-        );
-
-    }
-    else if (
-        tipo === "error"
-    ) {
-
-        status.classList.add(
-            "status-error"
-        );
-
-    }
-    else {
-
-        status.classList.add(
-            "status-info"
-        );
-
-    }
-
+function mostrarStatus(mensagem, tipo) {
+  let status = document.getElementById("status");
+  status.textContent = mensagem;
+  status.className = "status";
+  if (tipo === "ok") status.classList.add("status-ok");
+  else if (tipo === "error") status.classList.add("status-error");
+  else status.classList.add("status-info");
 }
 
-
-/* =====================================================
-   LIMPAR
-===================================================== */
+/* ===================== LIMPAR ===================== */
 
 function limparTudo() {
+  document.getElementById("zplInput").value = "";
+  document.getElementById("wmsInput").value = "";
+  document.getElementById("zplOutput").value = "";
+  document.getElementById("resultadoTabela").innerHTML = '<tr><td colspan="8">Nenhum processamento realizado.</td></tr>';
 
-    document
-        .getElementById("zplInput")
-        .value = "";
+  estadoAtual = { dadosZPL: null, resultados: [] };
 
+  ["totalZPL", "encontrados", "zonas", "planos", "pendencias"].forEach(id => {
+    document.getElementById(id).textContent = "0";
+  });
 
-    document
-        .getElementById("wmsInput")
-        .value = "";
-
-
-    document
-        .getElementById("zplOutput")
-        .value = "";
-
-
-    document
-        .getElementById("resultadoTabela")
-        .innerHTML =
-        '<tr>' +
-        '<td colspan="8">' +
-        'Nenhum processamento realizado.' +
-        '</td>' +
-        '</tr>';
-
-
-    document
-        .getElementById("totalZPL")
-        .textContent = "0";
-
-
-    document
-        .getElementById("encontrados")
-        .textContent = "0";
-
-
-    document
-        .getElementById("zonas")
-        .textContent = "0";
-
-
-    document
-        .getElementById("planos")
-        .textContent = "0";
-
-
-    document
-        .getElementById("pendencias")
-        .textContent = "0";
-
-
-    mostrarStatus(
-        "Pronto para processar.",
-        "info"
-    );
-
+  mostrarStatus("Pronto para processar.", "info");
 }
 
-
-/* =====================================================
-   EXEMPLO REAL
-===================================================== */
+/* ===================== EXEMPLO ===================== */
 
 function carregarExemplo() {
-
-    document
-        .getElementById("zplInput")
-        .value =
-
+  document.getElementById("zplInput").value =
 `^XA
-
 ^CF0,40
-
 ^FO20,20^FDtote18547^FS
-
 ^CF0,25^FO260,25^FD1^FS^CF0,40
-
 ^FO20,70^BY2,2.5,80^BCN,40,N,N,N^FDtote18547^FS
-
 ^A0R,60,60^FO320,30^FD^FS
-
 ^CF0,25
-
 ^FO20,135^FD0263677044^FS
-
 ^FO150,135^FDkaua.flores.rpa^FS
-
 ^CF0,40
-
 ^FO440,20^FDtote17510^FS
-
 ^CF0,25^FO680,25^FD2^FS^CF0,40
-
 ^FO440,70^BY2,2.5,80^BCN,40,N,N,N^FDtote17510^FS
-
 ^A0R,60,60^FO740,30^FD^FS
-
 ^CF0,25
-
 ^FO440,135^FD0263651401^FS
-
 ^FO570,135^FDkaua.flores.rpa^FS
-
 ^PQ1
-
 ^XZ`;
 
-
-    document
-        .getElementById("wmsInput")
-        .value =
-
+  document.getElementById("wmsInput").value =
 `| Natura Porto Alegre | #0263677044 | Terça-feira às 23:59 | NATURA - Natura Z3 - SC2 | natura | tote18547 | Não | kaua flores | Picking | Pickear itens |
 | Natura Porto Alegre | #0263651401 | Terça-feira às 23:59 | NATURA - Natura Z3 - SC2 | natura | tote17510 | Não | kaua flores | Picking | Pickear itens |`;
 
-
-    processar();
-
+  processar();
 }
 
-
-/* =====================================================
-   FIM
-===================================================== */
-
 </script>
-
 </body>
-
 </html>
